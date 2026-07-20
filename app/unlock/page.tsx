@@ -1,0 +1,4 @@
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+export default function UnlockPage(){const [error,setError]=useState(""); const router=useRouter(); async function submit(e:React.FormEvent<HTMLFormElement>){e.preventDefault(); const token=new FormData(e.currentTarget).get("token"); const res=await fetch("/api/auth",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({token})}); if(!res.ok){setError("Feil skrivetoken");return;} router.push("/"); router.refresh();} return <><h1>Aktiver skrivetilgang</h1><form className="form panel" onSubmit={submit}>{error&&<p className="error">{error}</p>}<label>Skrivetoken<input name="token" type="password" required autoComplete="current-password"/></label><button className="primary">Aktiver</button></form></>}
