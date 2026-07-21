@@ -26,8 +26,8 @@ export default function RootLayout({
               <Link className="button" href="/api/export">
                 Eksporter
               </Link>
-              <Link className="button" href="/unlock">
-                Skrivetilgang
+              <Link className="button icon-button" href="/unlock" aria-label="Skrivetilgang" title="Skrivetilgang">
+                <span aria-hidden="true">⚙</span>
               </Link>
             </nav>
           </div>

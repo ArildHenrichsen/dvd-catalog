@@ -183,11 +183,19 @@ export function ReleaseForm({ release, initial }: { release?: Release; initial?:
       <div className="two-col">
         <label>
           DVD-region
-          <input name="region" defaultValue={defaults?.region || ""} />
+          <select name="region" defaultValue={defaults?.region || "2"}>
+            <option value="2">2</option>
+            <option value="1">1</option>
+          </select>
         </label>
         <label>
-          Utgave / marked
-          <input name="edition" defaultValue={defaults?.edition || ""} />
+          Utgave
+          <select name="edition" defaultValue={defaults?.edition || "Nordisk"}>
+            <option value="Nordisk">Nordisk</option>
+            <option value="UK">UK</option>
+            <option value="US">US</option>
+            <option value="Annet">Annet</option>
+          </select>
         </label>
       </div>
       <label>
