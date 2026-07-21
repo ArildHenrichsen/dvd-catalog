@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Release } from "@/lib/types";
+import { MovieMetadataAssistant } from "@/components/movie-metadata-assistant";
 
 export function ReleaseForm({ release, initial }: { release?: Release; initial?: Release }) {
   const defaults = release || initial;
@@ -12,6 +13,10 @@ export function ReleaseForm({ release, initial }: { release?: Release; initial?:
   const [coverPath, setCoverPath] = useState(defaults?.cover_path || "");
   const [preview, setPreview] = useState(defaults?.cover_url || "");
   const [isWishlist, setIsWishlist] = useState(defaults?.is_wishlist ?? false);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [originalTitle, setOriginalTitle] = useState(defaults?.original_title || "");
+  const [alternativeTitle, setAlternativeTitle] = useState(defaults?.alternative_title || "");
+  const [releaseYear, setReleaseYear] = useState(defaults?.release_year?.toString() || "");
 
   async function upload(file: File) {
     setBusy(true);
@@ -66,13 +71,32 @@ export function ReleaseForm({ release, initial }: { release?: Release; initial?:
         </span>
       </label>
 
+      <MovieMetadataAssistant
+        coverFile={coverFile}
+        initialQuery={originalTitle}
+        onApply={metadata => {
+          setOriginalTitle(metadata.original_title);
+          setAlternativeTitle(metadata.alternative_title || "");
+          setReleaseYear(metadata.release_year?.toString() || "");
+        }}
+      />
+
       <label>
         Originaltittel
-        <input name="original_title" required defaultValue={defaults?.original_title} />
+        <input
+          name="original_title"
+          required
+          value={originalTitle}
+          onChange={event => setOriginalTitle(event.target.value)}
+        />
       </label>
       <label>
         Alternativ tittel
-        <input name="alternative_title" defaultValue={defaults?.alternative_title || ""} />
+        <input
+          name="alternative_title"
+          value={alternativeTitle}
+          onChange={event => setAlternativeTitle(event.target.value)}
+        />
       </label>
       <div className="two-col">
         <label>
@@ -82,7 +106,8 @@ export function ReleaseForm({ release, initial }: { release?: Release; initial?:
             type="number"
             min="1888"
             max={new Date().getFullYear() + 1}
-            defaultValue={defaults?.release_year || ""}
+            value={releaseYear}
+            onChange={event => setReleaseYear(event.target.value)}
           />
         </label>
         <label>
@@ -121,6 +146,7 @@ export function ReleaseForm({ release, initial }: { release?: Release; initial?:
             const file = event.target.files?.[0];
             if (!file) return;
             try {
+              setCoverFile(file);
               setPreview(URL.createObjectURL(file));
               await upload(file);
             } catch (err) {

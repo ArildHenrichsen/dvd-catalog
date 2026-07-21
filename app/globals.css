@@ -324,3 +324,46 @@ dd { margin: .18rem 0 0; }
   .collection-tabs a { padding-inline: .45rem; }
   .wishlist-toggle { padding: .74rem; }
 }
+
+.metadata-assistant {
+  display: grid;
+  gap: .85rem;
+  padding: .9rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+  border-radius: 15px;
+  background: linear-gradient(145deg, var(--accent-soft), color-mix(in srgb, var(--card) 92%, transparent));
+}
+.metadata-assistant-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.metadata-assistant-heading > div { display: grid; gap: .2rem; }
+.metadata-assistant-heading small, .tmdb-credit, .assistant-status { color: var(--muted); }
+.tmdb-credit { font-size: .72rem; white-space: nowrap; }
+.metadata-assistant-actions { display: grid; grid-template-columns: auto 1fr; gap: .6rem; align-items: end; }
+.metadata-search-row { display: grid; grid-template-columns: 1fr auto; gap: .5rem; }
+.assistant-status { margin: 0; font-size: .86rem; }
+.movie-results { display: grid; gap: .6rem; max-height: 440px; overflow: auto; padding-right: .2rem; }
+.movie-result {
+  display: grid;
+  grid-template-columns: 58px minmax(0,1fr) auto;
+  gap: .7rem;
+  align-items: center;
+  padding: .58rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg-elevated) 88%, transparent);
+}
+.movie-result-poster { width: 58px; aspect-ratio: 2/3; overflow: hidden; border-radius: 8px; background: var(--border); display: grid; place-items: center; }
+.movie-result-poster img { width: 100%; height: 100%; object-fit: cover; }
+.movie-result-poster span { padding: .3rem; text-align: center; font-size: .65rem; color: var(--muted); }
+.movie-result-copy { min-width: 0; display: grid; gap: .12rem; }
+.movie-result-copy > span, .movie-result-copy > small { color: var(--muted); }
+.movie-result-copy p { margin: .28rem 0 0; color: var(--muted); font-size: .78rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.movie-result .button, .movie-result button { min-height: 36px; padding: .45rem .7rem; }
+
+@media (max-width: 600px) {
+  .metadata-assistant-heading { display: grid; }
+  .metadata-assistant-actions { grid-template-columns: 1fr; }
+  .metadata-assistant-actions > button { width: 100%; }
+  .movie-result { grid-template-columns: 48px minmax(0,1fr); }
+  .movie-result-poster { width: 48px; }
+  .movie-result > button { grid-column: 1 / -1; width: 100%; }
+}
