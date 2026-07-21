@@ -1,7 +1,9 @@
 export function SearchToolbar({
   values,
+  basePath = "/",
 }: {
   values: Record<string, string | undefined>;
+  basePath?: string;
 }) {
   const hasAdvancedFilters = Boolean(
     values.year ||
@@ -105,7 +107,7 @@ export function SearchToolbar({
         <button className="primary" type="submit">
           Søk
         </button>
-        <a className="button" href="/">
+        <a className="button" href={basePath}>
           Nullstill
         </a>
       </div>

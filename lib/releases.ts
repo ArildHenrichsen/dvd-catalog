@@ -12,6 +12,7 @@ export type ReleaseQuery = {
   sort?: string;
   dir?: "asc" | "desc";
   page?: number;
+  wishlist?: boolean;
 };
 
 const PAGE_SIZE = 24;
@@ -22,7 +23,10 @@ export async function listReleases(params: ReleaseQuery) {
   const page = Math.max(1, params.page || 1);
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
-  let query = supabase.from("releases").select("*", { count: "exact" });
+  let query = supabase
+    .from("releases")
+    .select("*", { count: "exact" })
+    .eq("is_wishlist", params.wishlist ?? false);
 
   if (params.q?.trim()) {
     const q = params.q.trim().replaceAll(",", " ");
@@ -39,15 +43,7 @@ export async function listReleases(params: ReleaseQuery) {
   const sort = allowedSorts.has(params.sort || "") ? params.sort! : "created_at";
   const ascending = params.dir === "asc";
   const { data, error, count } = await query.order(sort, { ascending, nullsFirst: false }).range(from, to);
-  if (error) {
-  console.error("Supabase listReleases-feil:", error);
-
-  throw new Error(
-    `Supabase-feil ${error.code ?? "ukjent kode"}: ${error.message}` +
-      (error.details ? ` – ${error.details}` : "") +
-      (error.hint ? ` – Hint: ${error.hint}` : "")
-  );
-}
+  if (error) throw error;
 
   const releases = await Promise.all((data as Release[]).map(async release => ({
     ...release,

@@ -19,6 +19,7 @@ export function ReleaseCard({ release }: { release: Release }) {
         )}
       </div>
       <div className="card-body">
+        {release.is_wishlist && <span className="wishlist-card-label">♡ Ønskeliste</span>}
         <h2>{release.original_title}</h2>
         {release.alternative_title && (
           <span className="muted card-subtitle">{release.alternative_title}</span>

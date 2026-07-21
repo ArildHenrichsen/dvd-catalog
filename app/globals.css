@@ -243,3 +243,84 @@ dialog::backdrop { background: rgb(0 0 0 / .58); backdrop-filter: blur(4px); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
 }
+
+.collection-tabs {
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .28rem;
+  margin-top: 1rem;
+  padding: .28rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(14px);
+}
+.collection-tabs a {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .42rem;
+  padding: .52rem .82rem;
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: .9rem;
+  font-weight: 800;
+  transition: background .16s ease, color .16s ease, box-shadow .16s ease;
+}
+.collection-tabs a.active {
+  background: var(--bg-elevated);
+  color: var(--text);
+  box-shadow: 0 4px 14px rgba(31, 38, 73, .09);
+}
+
+.wishlist-toggle {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: .78rem;
+  padding: .82rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+  border-radius: 14px;
+  background: var(--accent-soft);
+  color: var(--text);
+  cursor: pointer;
+}
+.wishlist-toggle input {
+  width: 22px;
+  min-height: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+.wishlist-toggle-copy { display: grid; gap: .16rem; }
+.wishlist-toggle-copy strong { font-size: .96rem; }
+.wishlist-toggle-copy small { color: var(--muted); font-weight: 550; line-height: 1.35; }
+
+.wishlist-card-label,
+.wishlist-badge {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: .74rem;
+  font-weight: 850;
+}
+.wishlist-card-label { padding: .2rem .46rem; }
+.wishlist-badge { padding: .34rem .62rem; margin-bottom: .45rem; font-size: .82rem; }
+.back-link { width: fit-content; color: var(--muted); font-size: .9rem; font-weight: 750; }
+.back-link:hover { color: var(--accent-strong); }
+
+dl { margin: 0; }
+dt { margin-top: .72rem; color: var(--muted); font-size: .78rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+dt:first-child { margin-top: 0; }
+dd { margin: .18rem 0 0; }
+
+@media (max-width: 600px) {
+  .collection-tabs { display: grid; width: 100%; margin-top: .78rem; }
+  .collection-tabs a { padding-inline: .45rem; }
+  .wishlist-toggle { padding: .74rem; }
+}

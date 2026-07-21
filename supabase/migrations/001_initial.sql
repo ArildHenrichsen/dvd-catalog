@@ -10,6 +10,7 @@ create table if not exists public.releases (
   imdb_score numeric(3,1) check (imdb_score between 0 and 10),
   notes text,
   cover_path text,
+  is_wishlist boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -19,6 +20,7 @@ create index if not exists releases_alternative_title_idx on public.releases (lo
 create index if not exists releases_year_idx on public.releases (release_year);
 create index if not exists releases_region_idx on public.releases (region);
 create index if not exists releases_score_idx on public.releases (imdb_score);
+create index if not exists releases_wishlist_idx on public.releases (is_wishlist, created_at desc);
 create index if not exists releases_created_idx on public.releases (created_at desc);
 
 create or replace function public.set_updated_at()
