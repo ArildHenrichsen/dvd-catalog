@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { CollectionTabs } from "@/components/collection-tabs";
 import { ReleaseListing } from "@/components/release-listing";
+import { QuickCheckLauncher } from "@/components/quick-check-launcher";
 
 export default async function Home({
   searchParams,
@@ -12,10 +12,7 @@ export default async function Home({
     <>
       <div className="home-list-header">
         <CollectionTabs active="collection" />
-        <Link className="button quick-camera-button" href="/quick-check">
-          <span aria-hidden="true">📷</span>
-          Sjekk cover
-        </Link>
+        <QuickCheckLauncher />
       </div>
       <ReleaseListing params={params} wishlist={false} />
     </>

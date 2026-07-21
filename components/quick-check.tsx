@@ -1,9 +1,21 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { MovieSuggestion } from "@/lib/tmdb";
 import type { Release } from "@/lib/types";
+
+
+const QUICK_CHECK_SESSION_KEY = "dvd-quick-check-image";
+
+function dataUrlToFile(dataUrl: string): File {
+  const [header, encoded] = dataUrl.split(",");
+  const mime = header.match(/data:(.*?);base64/)?.[1] ?? "image/jpeg";
+  const bytes = atob(encoded);
+  const buffer = new Uint8Array(bytes.length);
+  for (let index = 0; index < bytes.length; index += 1) buffer[index] = bytes.charCodeAt(index);
+  return new File([buffer], `quick-check-${Date.now()}.jpg`, { type: mime });
+}
 
 type MatchRelease = Pick<Release, "id" | "original_title" | "alternative_title" | "release_year" | "is_wishlist" | "cover_url">;
 
@@ -18,6 +30,23 @@ export function QuickCheck() {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+  const restoredImage = useRef(false);
+
+  useEffect(() => {
+    if (restoredImage.current) return;
+    restoredImage.current = true;
+    const stored = sessionStorage.getItem(QUICK_CHECK_SESSION_KEY);
+    if (!stored) return;
+    sessionStorage.removeItem(QUICK_CHECK_SESSION_KEY);
+    try {
+      const restoredFile = dataUrlToFile(stored);
+      setFile(restoredFile);
+      setPreview(stored);
+      void analyze(restoredFile);
+    } catch {
+      setError("Kamerabildet kunne ikke klargjøres. Ta bildet på nytt.");
+    }
+  }, []);
 
   function reset() {
     setFile(null);
@@ -115,24 +144,26 @@ export function QuickCheck() {
         </div>
       </div>
 
-      <label className="camera-upload-button primary button">
-        <span aria-hidden="true">📷</span>
-        Ta bilde av cover
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          capture="environment"
-          hidden
-          onChange={event => {
-            const chosen = event.target.files?.[0];
-            if (!chosen) return;
-            setFile(chosen);
-            setPreview(URL.createObjectURL(chosen));
-            void analyze(chosen);
-          }}
-        />
-      </label>
+      {!file && (
+        <label className="camera-upload-button primary button">
+          <span aria-hidden="true">📷</span>
+          Ta bilde av cover
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            capture="environment"
+            hidden
+            onChange={event => {
+              const chosen = event.target.files?.[0];
+              if (!chosen) return;
+              setFile(chosen);
+              setPreview(URL.createObjectURL(chosen));
+              void analyze(chosen);
+            }}
+          />
+        </label>
+      )}
 
       {preview && <div className="quick-check-preview"><img src={preview} alt="Cover som kontrolleres" /></div>}
       {status && <p className="assistant-status" aria-live="polite">{status}</p>}
