@@ -17,11 +17,11 @@ export function MovieMetadataAssistant({
   coverFile: File | null;
   initialQuery?: string;
   existingReleaseId?: string;
-  onApply: (metadata: Metadata) => void;
+  onApply: (metadata: Metadata, importedCover?: { path: string; url: string }) => void;
 }) {
   const [query, setQuery] = useState(initialQuery ?? "");
   const [results, setResults] = useState<MovieSuggestion[]>([]);
-  const [busy, setBusy] = useState<"visual" | "search" | null>(null);
+  const [busy, setBusy] = useState<"visual" | "search" | "poster" | null>(null);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
 
@@ -161,13 +161,55 @@ export function MovieMetadataAssistant({
               <button
                 type="button"
                 className="primary"
-                onClick={() => {
-                  onApply(movie);
+                disabled={busy !== null}
+                onClick={async () => {
+                  let importedCover: { path: string; url: string } | undefined;
+
+                  if (movie.poster_url) {
+                    const shouldImportCover = window.confirm(
+                      `Vil du også bruke coverbildet fra TMDB for «${movie.original_title}»?`,
+                    );
+
+                    if (shouldImportCover) {
+                      setBusy("poster");
+                      setError("");
+                      setStatus("Henter coverbildet fra TMDB …");
+
+                      try {
+                        const response = await fetch("/api/movies/import-poster", {
+                          method: "POST",
+                          headers: { "content-type": "application/json" },
+                          body: JSON.stringify({ posterUrl: movie.poster_url }),
+                        });
+                        const json = await response.json();
+                        if (!response.ok) {
+                          throw new Error(json.error || "Coverbildet kunne ikke importeres");
+                        }
+                        importedCover = { path: json.path, url: json.url };
+                      } catch (err) {
+                        setError(
+                          err instanceof Error
+                            ? err.message
+                            : "Coverbildet kunne ikke importeres",
+                        );
+                        setStatus("");
+                        setBusy(null);
+                        return;
+                      }
+                    }
+                  }
+
+                  onApply(movie, importedCover);
                   setResults([]);
-                  setStatus(`Metadata fra «${movie.original_title}» er lagt inn i skjemaet.`);
+                  setStatus(
+                    importedCover
+                      ? `Metadata og cover fra «${movie.original_title}» er lagt inn i skjemaet.`
+                      : `Metadata fra «${movie.original_title}» er lagt inn i skjemaet.`,
+                  );
+                  setBusy(null);
                 }}
               >
-                Bruk
+                {busy === "poster" ? "Henter cover …" : "Bruk"}
               </button>
             </article>
           ))}

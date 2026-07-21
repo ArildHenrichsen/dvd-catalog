@@ -97,7 +97,12 @@ export function ReleaseForm({ release, initial }: { release?: Release; initial?:
         coverFile={coverFile}
         existingReleaseId={release?.id}
         initialQuery={originalTitle}
-        onApply={metadata => {
+        onApply={(metadata, importedCover) => {
+          if (importedCover) {
+            setCoverPath(importedCover.path);
+            setPreview(importedCover.url);
+            setCoverFile(null);
+          }
           setOriginalTitle(metadata.original_title);
           setAlternativeTitle(metadata.alternative_title || "");
           setReleaseYear(metadata.release_year?.toString() || "");

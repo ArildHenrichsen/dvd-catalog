@@ -1,6 +1,6 @@
-# Existing cover analysis
+# TMDB-cover fra forslag
 
-- Visual cover analysis can now use the already stored cover when editing an existing DVD.
-- A newly selected cover file takes priority over the stored cover.
-- The server resolves the cover path from the release ID and downloads it from the private Supabase Storage bucket.
-- No database migration or new environment variable is required.
+- Når brukeren velger «Bruk» på et filmforslag, spør appen om TMDB-coveret også skal brukes.
+- Ved ja hentes bildet serverside, valideres og lagres i privat Supabase Storage.
+- Skjemaets coversti og forhåndsvisning oppdateres før lagring.
+- Ved nei brukes bare metadataene.
