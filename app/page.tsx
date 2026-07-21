@@ -9,7 +9,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
   const pageHref = (page:number) => `/?${new URLSearchParams({...Object.fromEntries(Object.entries(params).filter(([,v])=>v)), page:String(page)} as Record<string,string>).toString()}`;
   return <>
     <SearchToolbar values={params} />
-    <p className="muted">{result.count} registreringer</p>
+    <div className="collection-meta"><span className="count-pill">{result.count} registreringer</span></div>
     {result.releases.length ? <div className="grid">{result.releases.map(r => <ReleaseCard key={r.id} release={r} />)}</div> : <div className="empty"><h1>Ingen treff</h1><p>Registrer en DVD eller nullstill filtrene.</p></div>}
     {totalPages > 1 && <nav className="actions" style={{marginTop:"1rem"}}>{result.page > 1 && <a className="button" href={pageHref(result.page-1)}>Forrige</a>}<span className="button">Side {result.page} av {totalPages}</span>{result.page < totalPages && <a className="button" href={pageHref(result.page+1)}>Neste</a>}</nav>}
   </>;

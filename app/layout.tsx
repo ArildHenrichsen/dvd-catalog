@@ -15,8 +15,9 @@ export default function RootLayout({
       <body>
         <header>
           <div className="container header-row">
-            <Link className="app-title" href="/">
-              DVD-samlingen
+            <Link className="brand" href="/" aria-label="Gå til DVD-samlingen">
+              <span className="brand-mark" aria-hidden="true">▶</span>
+              <span className="app-title">DVD-samlingen</span>
             </Link>
             <nav className="header-actions" aria-label="Hovedhandlinger">
               <Link className="button primary" href="/releases/new">
