@@ -23,6 +23,7 @@ export const releaseSchema = z.object({
   imdb_url: z.string().trim().url("Ugyldig IMDb-lenke").regex(/^https:\/\/(www\.)?imdb\.com\/title\/tt\d{7,10}\/?$/i, "IMDb-lenken må peke til en IMDb-tittelside").optional().nullable().transform(v => v || null),
   notes: z.string().trim().max(4000).optional().nullable().transform(v => v || null),
   cover_path: optionalText,
+  thumbnail_path: optionalText,
 });
 
 export type ReleaseFormValues = z.input<typeof releaseSchema>;

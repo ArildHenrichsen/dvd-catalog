@@ -10,6 +10,7 @@ export default async function NewReleasePage({
     duplicate?: string;
     wishlist?: string;
     coverPath?: string;
+    thumbnailPath?: string;
     originalTitle?: string;
     alternativeTitle?: string;
     releaseYear?: string;
@@ -34,6 +35,7 @@ export default async function NewReleasePage({
       imdb_url: params.imdbUrl || null,
       notes: null,
       cover_path: params.coverPath,
+      thumbnail_path: params.thumbnailPath || null,
       cover_url: signed.data?.signedUrl ?? null,
       is_wishlist: false,
       created_at: "",
@@ -57,6 +59,7 @@ export default async function NewReleasePage({
             imdb_url: null,
             notes: null,
             cover_path: null,
+            thumbnail_path: null,
             is_wishlist: true,
             created_at: "",
             updated_at: "",

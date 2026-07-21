@@ -5,9 +5,9 @@ export function ReleaseCard({ release }: { release: Release }) {
   return (
     <Link className="card" href={`/releases/${release.id}`}>
       <div className="cover">
-        {release.cover_url ? (
+        {(release.thumbnail_url || release.cover_url) ? (
           <img
-            src={release.cover_url}
+            src={release.thumbnail_url || release.cover_url || ""}
             alt={`Cover: ${release.original_title}`}
             loading="lazy"
           />

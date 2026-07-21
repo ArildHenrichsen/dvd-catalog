@@ -9,8 +9,10 @@ export type Release = {
   imdb_url: string | null;
   notes: string | null;
   cover_path: string | null;
+  thumbnail_path: string | null;
   is_wishlist: boolean;
   cover_url?: string | null;
+  thumbnail_url?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -25,5 +27,6 @@ export type ReleaseInput = {
   imdb_url?: string | null;
   notes?: string | null;
   cover_path?: string | null;
+  thumbnail_path?: string | null;
   is_wishlist?: boolean;
 };

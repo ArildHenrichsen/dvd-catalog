@@ -119,6 +119,7 @@ export function QuickCheck() {
       const json = await response.json();
       if (!response.ok) throw new Error(json.error || "Bildet kunne ikke lastes opp");
       const params = new URLSearchParams({ coverPath: json.path });
+      if (json.thumbnailPath) params.set("thumbnailPath", json.thumbnailPath);
       if (selected) {
         params.set("originalTitle", selected.original_title);
         if (selected.alternative_title) params.set("alternativeTitle", selected.alternative_title);

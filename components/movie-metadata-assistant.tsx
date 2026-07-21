@@ -17,7 +17,7 @@ export function MovieMetadataAssistant({
   coverFile: File | null;
   initialQuery?: string;
   existingReleaseId?: string;
-  onApply: (metadata: Metadata, importedCover?: { path: string; url: string }) => void;
+  onApply: (metadata: Metadata, importedCover?: { path: string; thumbnailPath?: string; url: string }) => void;
 }) {
   const [query, setQuery] = useState(initialQuery ?? "");
   const [results, setResults] = useState<MovieSuggestion[]>([]);
@@ -163,7 +163,7 @@ export function MovieMetadataAssistant({
                 className="primary"
                 disabled={busy !== null}
                 onClick={async () => {
-                  let importedCover: { path: string; url: string } | undefined;
+                  let importedCover: { path: string; thumbnailPath?: string; url: string } | undefined;
 
                   if (movie.poster_url) {
                     const shouldImportCover = window.confirm(
@@ -185,7 +185,7 @@ export function MovieMetadataAssistant({
                         if (!response.ok) {
                           throw new Error(json.error || "Coverbildet kunne ikke importeres");
                         }
-                        importedCover = { path: json.path, url: json.url };
+                        importedCover = { path: json.path, thumbnailPath: json.thumbnailPath, url: json.url };
                       } catch (err) {
                         setError(
                           err instanceof Error

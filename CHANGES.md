@@ -1,7 +1,6 @@
-# Direkte kamera og kompakt forslag-grid
+# Detail-style edit layout
 
-- «Sjekk cover» på forsiden åpner mobilkameraet direkte.
-- Kamerabildet komprimeres lokalt og analyseres automatisk på hurtigsjekksiden.
-- Den ekstra «Ta bilde av cover»-handlingen hoppes over i normal hurtigflyt.
-- Filmforslag vises i et kompakt grid med to kort i bredden på mobil og tre på større skjermer.
-- Ingen databaseendring eller ny miljøvariabel.
+- Edit view now mirrors the single-DVD detail view.
+- Cover editing and metadata analysis are placed in a left column.
+- Editable metadata is placed in a compact right-side detail panel.
+- Mobile layout remains one column with a compact cover and sticky save button.

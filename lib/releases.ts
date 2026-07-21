@@ -11,18 +11,19 @@ export type ReleaseQuery = {
   cover?: "yes" | "no" | "";
   sort?: string;
   dir?: "asc" | "desc";
-  page?: number;
+  offset?: number;
+  limit?: number;
   wishlist?: boolean;
 };
 
-const PAGE_SIZE = 24;
+export const RELEASE_BATCH_SIZE = 20;
 const allowedSorts = new Set(["original_title", "alternative_title", "release_year", "imdb_score", "created_at", "updated_at"]);
 
 export async function listReleases(params: ReleaseQuery) {
   const supabase = getSupabaseAdmin();
-  const page = Math.max(1, params.page || 1);
-  const from = (page - 1) * PAGE_SIZE;
-  const to = from + PAGE_SIZE - 1;
+  const offset = Math.max(0, params.offset || 0);
+  const limit = Math.min(100, Math.max(1, params.limit || RELEASE_BATCH_SIZE));
+  const to = offset + limit - 1;
   let query = supabase
     .from("releases")
     .select("*", { count: "exact" })
@@ -42,14 +43,28 @@ export async function listReleases(params: ReleaseQuery) {
 
   const sort = allowedSorts.has(params.sort || "") ? params.sort! : "created_at";
   const ascending = params.dir === "asc";
-  const { data, error, count } = await query.order(sort, { ascending, nullsFirst: false }).range(from, to);
-  if (error) throw error;
+  const { data, error, count } = await query.order(sort, { ascending, nullsFirst: false }).range(offset, to);
+  if (error) throw new Error(`Supabase-feil ${error.code ?? ""}: ${error.message}`);
 
-  const releases = await Promise.all((data as Release[]).map(async release => ({
-    ...release,
-    cover_url: release.cover_path ? (await supabase.storage.from("covers").createSignedUrl(release.cover_path, 3600)).data?.signedUrl ?? null : null,
-  })));
-  return { releases, count: count || 0, page, pageSize: PAGE_SIZE };
+  const releases = await Promise.all((data as Release[]).map(async release => {
+    const imagePath = release.thumbnail_path || release.cover_path;
+    const signed = imagePath
+      ? await supabase.storage.from("covers").createSignedUrl(imagePath, 3600)
+      : null;
+    return {
+      ...release,
+      thumbnail_url: signed?.data?.signedUrl ?? null,
+      cover_url: signed?.data?.signedUrl ?? null,
+    };
+  }));
+
+  return {
+    releases,
+    count: count || 0,
+    offset,
+    limit,
+    hasMore: offset + releases.length < (count || 0),
+  };
 }
 
 export async function getRelease(id: string) {
@@ -57,8 +72,13 @@ export async function getRelease(id: string) {
   const { data, error } = await supabase.from("releases").select("*").eq("id", id).single();
   if (error) return null;
   const release = data as Release;
+  const [coverSigned, thumbSigned] = await Promise.all([
+    release.cover_path ? supabase.storage.from("covers").createSignedUrl(release.cover_path, 3600) : null,
+    release.thumbnail_path ? supabase.storage.from("covers").createSignedUrl(release.thumbnail_path, 3600) : null,
+  ]);
   return {
     ...release,
-    cover_url: release.cover_path ? (await supabase.storage.from("covers").createSignedUrl(release.cover_path, 3600)).data?.signedUrl ?? null : null,
+    cover_url: coverSigned?.data?.signedUrl ?? null,
+    thumbnail_url: thumbSigned?.data?.signedUrl ?? null,
   } satisfies Release;
 }

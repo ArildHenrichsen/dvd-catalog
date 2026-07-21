@@ -28,6 +28,7 @@ type VisionWebDetection = {
 type VisionResponse = {
   responses?: Array<{
     webDetection?: VisionWebDetection;
+    textAnnotations?: Array<{ description?: string }>;
     error?: { code?: number; message?: string };
   }>;
 };
@@ -98,6 +99,55 @@ function extractQueries(web: VisionWebDetection) {
   }
 
   return [...deduped.values()].slice(0, 6);
+}
+
+
+function extractOcrQueries(fullText: string | undefined) {
+  if (!fullText) return [] as Array<{ query: string; reason: string; score: number }>;
+  const noise = /^(dvd|video|film|movie|special edition|collector.s edition|widescreen|dolby|region|disc|disk|starring|from the director|academy award|winner)$/i;
+  const creditWords = /\b(starring|directed|director|producer|screenplay|music by|academy award|winner|nominee|a film by)\b/i;
+  const lines = fullText
+    .split(/\r?\n/)
+    .map(line => cleanCandidate(line))
+    .filter(line => line.length >= 2 && line.length <= 80)
+    .filter(line => !noise.test(line) && !creditWords.test(line))
+    .filter(line => !/^\d+$/.test(line));
+
+  const candidates: Array<{ query: string; reason: string; score: number }> = [];
+  lines.forEach((line, index) => {
+    const words = line.split(/\s+/).filter(Boolean);
+    if (words.length <= 10) {
+      const titleLike = words.length >= 2 || line.length >= 5;
+      if (titleLike) candidates.push({ query: line, reason: "Tekst på coveret", score: 1.4 - index * 0.04 });
+    }
+    const next = lines[index + 1];
+    if (next && `${line} ${next}`.split(/\s+/).length <= 10) {
+      candidates.push({ query: `${line} ${next}`, reason: "Kombinert covertekst", score: 1.15 - index * 0.03 });
+    }
+  });
+
+  const deduped = new Map<string, { query: string; reason: string; score: number }>();
+  for (const candidate of candidates.sort((a, b) => b.score - a.score)) {
+    const key = candidate.query.toLocaleLowerCase("nb-NO");
+    if (!deduped.has(key)) deduped.set(key, candidate);
+  }
+  return [...deduped.values()].slice(0, 8);
+}
+
+function titleSimilarity(query: string, movie: MovieSuggestion) {
+  const normalize = (value: string) => value.toLocaleLowerCase("en").replace(/[^a-z0-9æøå]+/gi, " ").trim();
+  const q = normalize(query);
+  const titles = [movie.original_title, movie.alternative_title || ""].map(normalize);
+  if (titles.includes(q)) return 130;
+  const qTokens = new Set(q.split(/\s+/).filter(token => token.length > 1));
+  let best = 0;
+  for (const title of titles) {
+    const titleTokens = new Set(title.split(/\s+/).filter(token => token.length > 1));
+    const overlap = [...qTokens].filter(token => titleTokens.has(token)).length;
+    const union = new Set([...qTokens, ...titleTokens]).size || 1;
+    best = Math.max(best, (overlap / union) * 100);
+  }
+  return best;
 }
 
 export async function POST(request: Request) {
@@ -190,7 +240,11 @@ export async function POST(request: Request) {
         requests: [
           {
             image: { content },
-            features: [{ type: "WEB_DETECTION", maxResults: 20 }],
+            features: [
+              { type: "WEB_DETECTION", maxResults: 20 },
+              { type: "TEXT_DETECTION" },
+              { type: "LOGO_DETECTION", maxResults: 10 },
+            ],
           },
         ],
       }),
@@ -217,13 +271,14 @@ export async function POST(request: Request) {
     );
   }
 
-  const web = annotation?.webDetection;
-  if (!web) {
-    return NextResponse.json({ results: [], detectedQueries: [] });
-  }
+  const web = annotation?.webDetection ?? {};
 
   const imdbEvidence = extractImdbEvidence(web);
-  const queries = extractQueries(web);
+  const webQueries = extractQueries(web);
+  const ocrQueries = extractOcrQueries(annotation?.textAnnotations?.[0]?.description);
+  const queries = [...ocrQueries, ...webQueries]
+    .filter((item, index, all) => all.findIndex(other => other.query.toLocaleLowerCase("nb-NO") === item.query.toLocaleLowerCase("nb-NO")) === index)
+    .slice(0, 10);
   const ranked = new Map<number, MovieSuggestion & { rank: number }>();
 
   const imdbMatches = await Promise.all(
@@ -246,7 +301,7 @@ export async function POST(request: Request) {
 
   for (const group of queryMatches) {
     group.results.forEach((movie, resultIndex) => {
-      const rank = 500 - group.queryIndex * 40 - resultIndex * 8 + group.candidate.score * 10;
+      const rank = 500 - group.queryIndex * 35 - resultIndex * 8 + group.candidate.score * 20 + titleSimilarity(group.candidate.query, movie);
       const existing = ranked.get(movie.tmdb_id);
       if (!existing || rank > existing.rank) ranked.set(movie.tmdb_id, { ...movie, rank });
     });
