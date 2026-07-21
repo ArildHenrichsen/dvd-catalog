@@ -1,15 +1,6 @@
-# Endringer
+# Existing cover analysis
 
-Nye filer:
-- `app/api/movies/search/route.ts`
-- `components/movie-metadata-assistant.tsx`
-- `TMDB-OCR-SETUP.md`
-
-Endrede filer:
-- `components/release-form.tsx`
-- `app/globals.css`
-- `package.json`
-- `package-lock.json`
-- `.env.example`
-
-Kopier innholdet over prosjektroten, kjør `npm.cmd install`, legg til `TMDB_READ_ACCESS_TOKEN`, og kjør `npm.cmd run build`.
+- Visual cover analysis can now use the already stored cover when editing an existing DVD.
+- A newly selected cover file takes priority over the stored cover.
+- The server resolves the cover path from the release ID and downloads it from the private Supabase Storage bucket.
+- No database migration or new environment variable is required.

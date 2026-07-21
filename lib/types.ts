@@ -6,6 +6,7 @@ export type Release = {
   region: string | null;
   edition: string | null;
   imdb_score: number | null;
+  imdb_url: string | null;
   notes: string | null;
   cover_path: string | null;
   is_wishlist: boolean;
@@ -21,6 +22,7 @@ export type ReleaseInput = {
   region?: string | null;
   edition?: string | null;
   imdb_score?: number | null;
+  imdb_url?: string | null;
   notes?: string | null;
   cover_path?: string | null;
   is_wishlist?: boolean;

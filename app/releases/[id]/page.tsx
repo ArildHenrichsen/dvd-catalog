@@ -33,7 +33,8 @@ export default async function ReleasePage({ params }: { params: Promise<{ id: st
           <dt>Status</dt>
           <dd>{r.is_wishlist ? "På ønskelisten" : "I samlingen"}</dd>
           <dt>År</dt><dd>{r.release_year ?? "–"}</dd>
-          <dt>IMDb</dt><dd>{r.imdb_score?.toFixed(1) ?? "–"}</dd>
+          <dt>IMDb-score</dt><dd>{r.imdb_score?.toFixed(1) ?? "–"}</dd>
+          <dt>IMDb-link</dt><dd>{r.imdb_url ? <a href={r.imdb_url} target="_blank" rel="noreferrer">Åpne på IMDb ↗</a> : "–"}</dd>
           <dt>Region</dt><dd>{r.region ?? "–"}</dd>
           <dt>Utgave</dt><dd>{r.edition ?? "–"}</dd>
           <dt>Merknad</dt><dd style={{ whiteSpace: "pre-wrap" }}>{r.notes ?? "–"}</dd>

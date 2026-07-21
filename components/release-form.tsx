@@ -17,6 +17,8 @@ export function ReleaseForm({ release, initial }: { release?: Release; initial?:
   const [originalTitle, setOriginalTitle] = useState(defaults?.original_title || "");
   const [alternativeTitle, setAlternativeTitle] = useState(defaults?.alternative_title || "");
   const [releaseYear, setReleaseYear] = useState(defaults?.release_year?.toString() || "");
+  const [imdbScore, setImdbScore] = useState(defaults?.imdb_score?.toString() || "");
+  const [imdbUrl, setImdbUrl] = useState(defaults?.imdb_url || "");
 
   async function upload(file: File) {
     setBusy(true);
@@ -58,6 +60,56 @@ export function ReleaseForm({ release, initial }: { release?: Release; initial?:
     <form className="form panel" onSubmit={submit}>
       {error && <p className="error" role="alert">{error}</p>}
 
+      <section className="cover-first-field" aria-labelledby="cover-field-title">
+        <div className="cover-field-heading">
+          <div>
+            <strong id="cover-field-title">Coverbilde</strong>
+            <small>Ta et bilde eller last opp et eksisterende cover.</small>
+          </div>
+        </div>
+        <label className="cover-file-label">
+          <span>Ta bilde / last opp</span>
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            capture="environment"
+            onChange={async event => {
+              const file = event.target.files?.[0];
+              if (!file) return;
+              try {
+                setCoverFile(file);
+                setPreview(URL.createObjectURL(file));
+                await upload(file);
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "Feil");
+              }
+            }}
+          />
+        </label>
+        {preview && (
+          <div className="cover detail-cover cover-form-preview">
+            <img src={preview} alt="Forhåndsvisning av cover" />
+          </div>
+        )}
+      </section>
+
+      <MovieMetadataAssistant
+        coverFile={coverFile}
+        existingReleaseId={release?.id}
+        initialQuery={originalTitle}
+        onApply={metadata => {
+          setOriginalTitle(metadata.original_title);
+          setAlternativeTitle(metadata.alternative_title || "");
+          setReleaseYear(metadata.release_year?.toString() || "");
+          setImdbScore(
+            metadata.imdb_score != null && metadata.imdb_score > 0
+              ? metadata.imdb_score.toString()
+              : "",
+          );
+          setImdbUrl(metadata.imdb_url || "");
+        }}
+      />
+
       <label className="wishlist-toggle">
         <input
           name="is_wishlist"
@@ -70,16 +122,6 @@ export function ReleaseForm({ release, initial }: { release?: Release; initial?:
           <small>Vis oppføringen separat fra DVD-ene du allerede eier.</small>
         </span>
       </label>
-
-      <MovieMetadataAssistant
-        coverFile={coverFile}
-        initialQuery={originalTitle}
-        onApply={metadata => {
-          setOriginalTitle(metadata.original_title);
-          setAlternativeTitle(metadata.alternative_title || "");
-          setReleaseYear(metadata.release_year?.toString() || "");
-        }}
-      />
 
       <label>
         Originaltittel
@@ -118,10 +160,21 @@ export function ReleaseForm({ release, initial }: { release?: Release; initial?:
             min="0"
             max="10"
             step="0.1"
-            defaultValue={defaults?.imdb_score ?? ""}
+            value={imdbScore}
+            onChange={event => setImdbScore(event.target.value)}
           />
         </label>
       </div>
+      <label>
+        IMDb-link
+        <input
+          name="imdb_url"
+          type="url"
+          placeholder="https://www.imdb.com/title/tt0116695/"
+          value={imdbUrl}
+          onChange={event => setImdbUrl(event.target.value)}
+        />
+      </label>
       <div className="two-col">
         <label>
           DVD-region
@@ -136,30 +189,6 @@ export function ReleaseForm({ release, initial }: { release?: Release; initial?:
         Merknad
         <textarea name="notes" defaultValue={defaults?.notes || ""} />
       </label>
-      <label>
-        Cover
-        <input
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          capture="environment"
-          onChange={async event => {
-            const file = event.target.files?.[0];
-            if (!file) return;
-            try {
-              setCoverFile(file);
-              setPreview(URL.createObjectURL(file));
-              await upload(file);
-            } catch (err) {
-              setError(err instanceof Error ? err.message : "Feil");
-            }
-          }}
-        />
-      </label>
-      {preview && (
-        <div className="cover detail-cover">
-          <img src={preview} alt="Forhåndsvisning av cover" />
-        </div>
-      )}
       <button className="primary" disabled={busy}>
         {busy
           ? "Arbeider…"

@@ -19,6 +19,7 @@ export default async function NewReleasePage({
           region: null,
           edition: null,
           imdb_score: null,
+          imdb_url: null,
           notes: null,
           cover_path: null,
           is_wishlist: true,

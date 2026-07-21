@@ -8,6 +8,7 @@ create table if not exists public.releases (
   region text,
   edition text,
   imdb_score numeric(3,1) check (imdb_score between 0 and 10),
+  imdb_url text,
   notes text,
   cover_path text,
   is_wishlist boolean not null default false,
