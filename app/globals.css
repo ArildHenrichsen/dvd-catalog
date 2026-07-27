@@ -1295,3 +1295,57 @@ dd {
   cursor: default;
   opacity: .35;
 }
+
+.collection-status-badge {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  padding: .34rem .62rem;
+  margin-bottom: .45rem;
+  border-radius: 999px;
+  background: color-mix(
+    in srgb,
+    var(--border) 55%,
+    transparent
+  );
+  color: var(--text);
+  font-size: .82rem;
+  font-weight: 850;
+}
+
+.duplicate-match {
+  display: grid;
+  gap: .2rem;
+  padding: .8rem;
+  border: 1px solid var(--border);
+  border-radius: .85rem;
+  background: color-mix(
+    in srgb,
+    var(--bg-elevated) 75%,
+    transparent
+  );
+}
+
+.duplicate-match span,
+.duplicate-match small {
+  display: block;
+}
+
+.duplicate-match span {
+  color: var(--muted);
+}
+
+.duplicate-match small {
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.duplicate-dialog h2 {
+  margin-top: 0;
+}
+
+.duplicate-dialog > p {
+  color: var(--muted);
+  line-height: 1.5;
+}
