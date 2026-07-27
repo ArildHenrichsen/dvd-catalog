@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Release } from "@/lib/types";
 import { ImdbScoreButton } from "@/components/imdb-score-button";
+import { MovieMetadataAssistant } from "@/components/movie-metadata-assistant";
 
 export function ReleaseForm({
   release,
@@ -18,12 +19,29 @@ export function ReleaseForm({
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const [coverFile, setCoverFile] = useState<File | null>(
+    null,
+  );
+
   const [coverPath, setCoverPath] = useState(
     defaults?.cover_path || "",
   );
 
   const [preview, setPreview] = useState(
     defaults?.cover_url || "",
+  );
+
+  const [originalTitle, setOriginalTitle] = useState(
+    defaults?.original_title || "",
+  );
+
+  const [alternativeTitle, setAlternativeTitle] =
+    useState(defaults?.alternative_title || "");
+
+  const [releaseYear, setReleaseYear] = useState(
+    defaults?.release_year != null
+      ? String(defaults.release_year)
+      : "",
   );
 
   const [imdbUrl, setImdbUrl] = useState(
@@ -44,14 +62,16 @@ export function ReleaseForm({
       const body = new FormData();
       body.append("file", file);
 
-      const res = await fetch("/api/upload", {
+      const response = await fetch("/api/upload", {
         method: "POST",
         body,
       });
 
-      const json = await res.json().catch(() => null);
+      const json = await response
+        .json()
+        .catch(() => null);
 
-      if (!res.ok) {
+      if (!response.ok) {
         throw new Error(
           json?.error || "Opplasting av cover feilet",
         );
@@ -78,7 +98,9 @@ export function ReleaseForm({
     setError("");
 
     try {
-      const formData = new FormData(event.currentTarget);
+      const formData = new FormData(
+        event.currentTarget,
+      );
 
       const payload: Record<
         string,
@@ -86,14 +108,20 @@ export function ReleaseForm({
       > = Object.fromEntries(formData.entries());
 
       payload.cover_path = coverPath;
+      payload.original_title = originalTitle.trim();
+      payload.alternative_title =
+        alternativeTitle.trim();
+      payload.release_year =
+        releaseYear.trim() || null;
       payload.imdb_url = imdbUrl.trim() || null;
-      payload.imdb_score = imdbScore.trim() || null;
+      payload.imdb_score =
+        imdbScore.trim() || null;
 
       const url = release
         ? `/api/releases/${release.id}`
         : "/api/releases";
 
-      const res = await fetch(url, {
+      const response = await fetch(url, {
         method: release ? "PATCH" : "POST",
         headers: {
           "content-type": "application/json",
@@ -101,9 +129,11 @@ export function ReleaseForm({
         body: JSON.stringify(payload),
       });
 
-      const json = await res.json().catch(() => null);
+      const json = await response
+        .json()
+        .catch(() => null);
 
-      if (!res.ok) {
+      if (!response.ok) {
         throw new Error(
           json?.error || "Lagring av DVD-en feilet",
         );
@@ -139,11 +169,14 @@ export function ReleaseForm({
             capture="environment"
             disabled={busy}
             onChange={async (event) => {
-              const file = event.target.files?.[0];
+              const file =
+                event.target.files?.[0];
 
               if (!file) {
                 return;
               }
+
+              setCoverFile(file);
 
               const temporaryPreview =
                 URL.createObjectURL(file);
@@ -173,12 +206,59 @@ export function ReleaseForm({
         )}
       </section>
 
+      <MovieMetadataAssistant
+        coverFile={coverFile}
+        initialQuery={originalTitle}
+        existingReleaseId={
+          release ? String(release.id) : undefined
+        }
+        onApply={(metadata, importedCover) => {
+          setOriginalTitle(
+            metadata.original_title || originalTitle,
+          );
+
+          setAlternativeTitle(
+            metadata.alternative_title || "",
+          );
+
+          if (metadata.release_year != null) {
+            setReleaseYear(
+              String(metadata.release_year),
+            );
+          }
+
+          if (metadata.imdb_url) {
+            setImdbUrl(metadata.imdb_url);
+          }
+
+          if (
+            metadata.imdb_score != null &&
+            metadata.imdb_score > 0
+          ) {
+            setImdbScore(
+              String(metadata.imdb_score),
+            );
+          } else {
+            setImdbScore("");
+          }
+
+          if (importedCover) {
+            setCoverPath(importedCover.path);
+            setPreview(importedCover.url);
+            setCoverFile(null);
+          }
+        }}
+      />
+
       <label>
         Originaltittel
         <input
           name="original_title"
           required
-          defaultValue={defaults?.original_title}
+          value={originalTitle}
+          onChange={(event) =>
+            setOriginalTitle(event.target.value)
+          }
         />
       </label>
 
@@ -186,8 +266,11 @@ export function ReleaseForm({
         Alternativ tittel
         <input
           name="alternative_title"
-          defaultValue={
-            defaults?.alternative_title || ""
+          value={alternativeTitle}
+          onChange={(event) =>
+            setAlternativeTitle(
+              event.target.value,
+            )
           }
         />
       </label>
@@ -200,7 +283,10 @@ export function ReleaseForm({
             type="number"
             min="1888"
             max={new Date().getFullYear() + 1}
-            defaultValue={defaults?.release_year || ""}
+            value={releaseYear}
+            onChange={(event) =>
+              setReleaseYear(event.target.value)
+            }
           />
         </label>
 
