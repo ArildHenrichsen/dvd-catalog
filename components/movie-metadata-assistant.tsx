@@ -149,14 +149,7 @@ export function MovieMetadataAssistant({
               </div>
               <div className="movie-result-copy">
                 <strong>{movie.original_title}</strong>
-                {movie.alternative_title && <span>{movie.alternative_title}</span>}
                 <small>{movie.release_year ?? "Ukjent år"}</small>
-                {movie.imdb_score != null && movie.imdb_score > 0 && (
-                  <small>IMDb {movie.imdb_score.toFixed(1)}</small>
-                )}
-                {movie.imdb_url && <a href={movie.imdb_url} target="_blank" rel="noreferrer">Åpne IMDb ↗</a>}
-                {movie.match_reason && <small className="match-reason">{movie.match_reason}</small>}
-                {movie.overview && <p>{movie.overview}</p>}
               </div>
               <button
                 type="button"
