@@ -564,3 +564,78 @@ dd { margin: .18rem 0 0; }
     box-shadow: none;
   }
 }
+
+.admin-tool-panel {
+  display: grid;
+  gap: 1.25rem;
+  max-width: 850px;
+}
+
+.admin-warning {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.admin-warning span {
+  opacity: 0.8;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.admin-result {
+  display: grid;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.admin-result-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.admin-result-grid > div {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.admin-result-grid dt {
+  margin-bottom: 0.35rem;
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+
+.admin-result-grid dd {
+  margin: 0;
+  font-size: 1.65rem;
+  font-weight: 700;
+}
+
+.admin-failures summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.admin-failures ul {
+  margin: 0.75rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.imdb-attribution {
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
