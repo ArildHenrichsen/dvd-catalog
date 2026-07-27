@@ -19,9 +19,8 @@ export function ReleaseForm({
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const [coverFile, setCoverFile] = useState<File | null>(
-    null,
-  );
+  const [coverFile, setCoverFile] =
+    useState<File | null>(null);
 
   const [coverPath, setCoverPath] = useState(
     defaults?.cover_path || "",
@@ -31,27 +30,42 @@ export function ReleaseForm({
     defaults?.cover_url || "",
   );
 
-  const [originalTitle, setOriginalTitle] = useState(
-    defaults?.original_title || "",
+  const [originalTitle, setOriginalTitle] =
+    useState(defaults?.original_title || "");
+
+  const [
+    alternativeTitle,
+    setAlternativeTitle,
+  ] = useState(
+    defaults?.alternative_title || "",
   );
 
-  const [alternativeTitle, setAlternativeTitle] =
-    useState(defaults?.alternative_title || "");
-
-  const [releaseYear, setReleaseYear] = useState(
-    defaults?.release_year != null
-      ? String(defaults.release_year)
-      : "",
-  );
+  const [releaseYear, setReleaseYear] =
+    useState(
+      defaults?.release_year != null
+        ? String(defaults.release_year)
+        : "",
+    );
 
   const [imdbUrl, setImdbUrl] = useState(
     defaults?.imdb_url || "",
   );
 
-  const [imdbScore, setImdbScore] = useState(
-    defaults?.imdb_score != null
-      ? String(defaults.imdb_score)
-      : "",
+  const [imdbScore, setImdbScore] =
+    useState(
+      defaults?.imdb_score != null
+        ? String(defaults.imdb_score)
+        : "",
+    );
+
+  const [region, setRegion] = useState(
+    defaults?.region
+      ? String(defaults.region)
+      : "2",
+  );
+
+  const [edition, setEdition] = useState(
+    defaults?.edition || "Nordisk",
   );
 
   async function upload(file: File) {
@@ -62,10 +76,13 @@ export function ReleaseForm({
       const body = new FormData();
       body.append("file", file);
 
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body,
-      });
+      const response = await fetch(
+        "/api/upload",
+        {
+          method: "POST",
+          body,
+        },
+      );
 
       const json = await response
         .json()
@@ -73,7 +90,8 @@ export function ReleaseForm({
 
       if (!response.ok) {
         throw new Error(
-          json?.error || "Opplasting av cover feilet",
+          json?.error ||
+            "Opplasting av cover feilet",
         );
       }
 
@@ -105,26 +123,40 @@ export function ReleaseForm({
       const payload: Record<
         string,
         FormDataEntryValue | null
-      > = Object.fromEntries(formData.entries());
+      > = Object.fromEntries(
+        formData.entries(),
+      );
 
       payload.cover_path = coverPath;
-      payload.original_title = originalTitle.trim();
+      payload.original_title =
+        originalTitle.trim();
+
       payload.alternative_title =
         alternativeTitle.trim();
+
       payload.release_year =
         releaseYear.trim() || null;
-      payload.imdb_url = imdbUrl.trim() || null;
+
+      payload.imdb_url =
+        imdbUrl.trim() || null;
+
       payload.imdb_score =
         imdbScore.trim() || null;
+
+      payload.region = region;
+      payload.edition = edition;
 
       const url = release
         ? `/api/releases/${release.id}`
         : "/api/releases";
 
       const response = await fetch(url, {
-        method: release ? "PATCH" : "POST",
+        method: release
+          ? "PATCH"
+          : "POST",
         headers: {
-          "content-type": "application/json",
+          "content-type":
+            "application/json",
         },
         body: JSON.stringify(payload),
       });
@@ -135,7 +167,8 @@ export function ReleaseForm({
 
       if (!response.ok) {
         throw new Error(
-          json?.error || "Lagring av DVD-en feilet",
+          json?.error ||
+            "Lagring av DVD-en feilet",
         );
       }
 
@@ -145,7 +178,10 @@ export function ReleaseForm({
         );
       }
 
-      router.push(`/releases/${json.id}`);
+      router.push(
+        `/releases/${json.id}`,
+      );
+
       router.refresh();
     } catch (err) {
       setError(
@@ -159,10 +195,14 @@ export function ReleaseForm({
   }
 
   return (
-    <form className="form panel" onSubmit={submit}>
+    <form
+      className="form panel"
+      onSubmit={submit}
+    >
       <section className="cover-edit-section">
         <label>
           Coverbilde
+
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
@@ -178,10 +218,9 @@ export function ReleaseForm({
 
               setCoverFile(file);
 
-              const temporaryPreview =
-                URL.createObjectURL(file);
-
-              setPreview(temporaryPreview);
+              setPreview(
+                URL.createObjectURL(file),
+              );
 
               try {
                 await upload(file);
@@ -210,41 +249,56 @@ export function ReleaseForm({
         coverFile={coverFile}
         initialQuery={originalTitle}
         existingReleaseId={
-          release ? String(release.id) : undefined
+          release
+            ? String(release.id)
+            : undefined
         }
-        onApply={(metadata, importedCover) => {
+        onApply={(
+          metadata,
+          importedCover,
+        ) => {
           setOriginalTitle(
-            metadata.original_title || originalTitle,
+            metadata.original_title ||
+              originalTitle,
           );
 
           setAlternativeTitle(
-            metadata.alternative_title || "",
+            metadata.alternative_title ||
+              "",
           );
 
-          if (metadata.release_year != null) {
-            setReleaseYear(
-              String(metadata.release_year),
-            );
-          }
-
-          if (metadata.imdb_url) {
-            setImdbUrl(metadata.imdb_url);
-          }
-
           if (
-            metadata.imdb_score != null &&
-            metadata.imdb_score > 0
+            metadata.release_year != null
           ) {
-            setImdbScore(
-              String(metadata.imdb_score),
+            setReleaseYear(
+              String(
+                metadata.release_year,
+              ),
             );
-          } else {
-            setImdbScore("");
           }
+
+          setImdbUrl(
+            metadata.imdb_url || "",
+          );
+
+          setImdbScore(
+            metadata.imdb_score != null &&
+              metadata.imdb_score > 0
+              ? String(
+                  metadata.imdb_score,
+                )
+              : "",
+          );
 
           if (importedCover) {
-            setCoverPath(importedCover.path);
-            setPreview(importedCover.url);
+            setCoverPath(
+              importedCover.path,
+            );
+
+            setPreview(
+              importedCover.url,
+            );
+
             setCoverFile(null);
           }
         }}
@@ -252,18 +306,22 @@ export function ReleaseForm({
 
       <label>
         Originaltittel
+
         <input
           name="original_title"
           required
           value={originalTitle}
           onChange={(event) =>
-            setOriginalTitle(event.target.value)
+            setOriginalTitle(
+              event.target.value,
+            )
           }
         />
       </label>
 
       <label>
         Alternativ tittel
+
         <input
           name="alternative_title"
           value={alternativeTitle}
@@ -278,20 +336,26 @@ export function ReleaseForm({
       <div className="two-col">
         <label>
           Utgivelsesår
+
           <input
             name="release_year"
             type="number"
             min="1888"
-            max={new Date().getFullYear() + 1}
+            max={
+              new Date().getFullYear() + 1
+            }
             value={releaseYear}
             onChange={(event) =>
-              setReleaseYear(event.target.value)
+              setReleaseYear(
+                event.target.value,
+              )
             }
           />
         </label>
 
         <label>
           IMDb-score
+
           <input
             name="imdb_score"
             type="number"
@@ -300,7 +364,9 @@ export function ReleaseForm({
             step="0.1"
             value={imdbScore}
             onChange={(event) =>
-              setImdbScore(event.target.value)
+              setImdbScore(
+                event.target.value,
+              )
             }
           />
         </label>
@@ -308,22 +374,31 @@ export function ReleaseForm({
 
       {release && (
         <ImdbScoreButton
-          releaseId={String(release.id)}
-          imdbUrl={imdbUrl || null}
+          releaseId={String(
+            release.id,
+          )}
+          imdbUrl={
+            imdbUrl || null
+          }
           onUpdated={(score) => {
-            setImdbScore(String(score));
+            setImdbScore(
+              String(score),
+            );
           }}
         />
       )}
 
       <label>
         IMDb-lenke
+
         <input
           name="imdb_url"
           type="url"
           value={imdbUrl}
           onChange={(event) =>
-            setImdbUrl(event.target.value)
+            setImdbUrl(
+              event.target.value,
+            )
           }
           placeholder="https://www.imdb.com/title/tt..."
         />
@@ -332,31 +407,77 @@ export function ReleaseForm({
       <div className="two-col">
         <label>
           DVD-region
-          <input
+
+          <select
             name="region"
-            defaultValue={defaults?.region || ""}
-          />
+            value={region}
+            onChange={(event) =>
+              setRegion(
+                event.target.value,
+              )
+            }
+          >
+            <option value="2">
+              2
+            </option>
+
+            <option value="1">
+              1
+            </option>
+          </select>
         </label>
 
         <label>
           Utgave / marked
-          <input
+
+          <select
             name="edition"
-            defaultValue={defaults?.edition || ""}
-          />
+            value={edition}
+            onChange={(event) =>
+              setEdition(
+                event.target.value,
+              )
+            }
+          >
+            <option value="Nordisk">
+              Nordisk
+            </option>
+
+            <option value="UK">
+              UK
+            </option>
+
+            <option value="US">
+              US
+            </option>
+
+            <option value="Asia">
+              Asia
+            </option>
+
+            <option value="Annet">
+              Annet
+            </option>
+          </select>
         </label>
       </div>
 
       <label>
         Merknad
+
         <textarea
           name="notes"
-          defaultValue={defaults?.notes || ""}
+          defaultValue={
+            defaults?.notes || ""
+          }
         />
       </label>
 
       {error && (
-        <p className="error" role="alert">
+        <p
+          className="error"
+          role="alert"
+        >
           {error}
         </p>
       )}
