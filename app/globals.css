@@ -512,3 +512,55 @@ dd { margin: .18rem 0 0; }
   .edit-detail-form .edit-save-row { position: sticky; bottom: .6rem; z-index: 5; }
   .edit-detail-form .edit-save-row .primary { width: 100%; box-shadow: var(--shadow-md); }
 }
+
+/* Save operation feedback and cancellation */
+.edit-save-area {
+  display: grid;
+  gap: .65rem;
+  padding-top: .25rem;
+}
+
+.edit-save-area .edit-form-error {
+  margin: 0;
+  padding: .72rem .82rem;
+  border: 1px solid color-mix(in srgb, var(--danger) 42%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--danger) 9%, var(--surface));
+  line-height: 1.4;
+}
+
+.save-progress {
+  margin: 0;
+  color: var(--muted);
+  font-size: .9rem;
+}
+
+.edit-save-row {
+  gap: .65rem;
+  align-items: center;
+}
+
+@media (max-width: 700px) {
+  .edit-detail-form .edit-save-area {
+    position: sticky;
+    bottom: .6rem;
+    z-index: 5;
+    padding: .65rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    backdrop-filter: blur(14px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .edit-detail-form .edit-save-row {
+    position: static;
+  }
+
+  .edit-detail-form .edit-save-row .primary {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+    box-shadow: none;
+  }
+}
