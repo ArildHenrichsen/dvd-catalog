@@ -12,6 +12,7 @@ export const maxDuration = 300;
 type ReleaseRow = {
   id: string;
   imdb_url: string | null;
+  imdb_score: number | null;
 };
 
 type FailureItem = {
@@ -34,10 +35,14 @@ export async function POST() {
   try {
     const supabase = getSupabaseAdmin();
 
+    /*
+     * Manglende score kan være lagret enten som NULL eller 0.
+     * Derfor må begge varianter hentes.
+     */
     const { data, error: readError } = await supabase
       .from("releases")
-      .select("id, imdb_url")
-      .is("imdb_score", null);
+      .select("id, imdb_url, imdb_score")
+      .or("imdb_score.is.null,imdb_score.eq.0");
 
     if (readError) {
       return NextResponse.json(
@@ -52,23 +57,17 @@ export async function POST() {
 
     const releases = (data ?? []) as ReleaseRow[];
 
-    if (releases.length === 0) {
-      return NextResponse.json({
-        checked: 0,
-        updated: 0,
-        invalidLinks: 0,
-        missingRating: 0,
-        failed: 0,
-        failures: [],
-      });
-    }
-
-    const releaseIdsByImdbId = new Map<string, string[]>();
+    const releaseIdsByImdbId = new Map<
+      string,
+      string[]
+    >();
 
     let invalidLinks = 0;
 
     for (const release of releases) {
-      const imdbId = extractImdbId(release.imdb_url);
+      const imdbId = extractImdbId(
+        release.imdb_url,
+      );
 
       if (!imdbId) {
         invalidLinks += 1;
@@ -79,17 +78,38 @@ export async function POST() {
         releaseIdsByImdbId.get(imdbId) ?? [];
 
       existingReleaseIds.push(release.id);
+
       releaseIdsByImdbId.set(
         imdbId,
         existingReleaseIds,
       );
     }
 
+    const validLinks =
+      releases.length - invalidLinks;
+
+    if (releases.length === 0) {
+      return NextResponse.json({
+        candidates: 0,
+        checked: 0,
+        validLinks: 0,
+        invalidLinks: 0,
+        uniqueImdbIds: 0,
+        updated: 0,
+        missingRating: 0,
+        failed: 0,
+        failures: [],
+      });
+    }
+
     if (releaseIdsByImdbId.size === 0) {
       return NextResponse.json({
+        candidates: releases.length,
         checked: releases.length,
-        updated: 0,
+        validLinks: 0,
         invalidLinks,
+        uniqueImdbIds: 0,
+        updated: 0,
         missingRating: 0,
         failed: 0,
         failures: [],
@@ -116,13 +136,20 @@ export async function POST() {
         continue;
       }
 
-      const { error: updateError } = await supabase
-        .from("releases")
-        .update({
-          imdb_score: rating.rating,
-        })
-        .in("id", releaseIds)
-        .is("imdb_score", null);
+      /*
+       * Oppdater bare dersom score fortsatt mangler.
+       * Beskytter mot at en score er blitt lagt inn mens
+       * bulkjobben kjører.
+       */
+      const { data: updatedRows, error: updateError } =
+        await supabase
+          .from("releases")
+          .update({
+            imdb_score: rating.rating,
+          })
+          .in("id", releaseIds)
+          .or("imdb_score.is.null,imdb_score.eq.0")
+          .select("id");
 
       if (updateError) {
         failures.push({
@@ -133,13 +160,17 @@ export async function POST() {
         continue;
       }
 
-      updated += releaseIds.length;
+      updated += updatedRows?.length ?? 0;
     }
 
     return NextResponse.json({
+      candidates: releases.length,
       checked: releases.length,
-      updated,
+      validLinks,
       invalidLinks,
+      uniqueImdbIds:
+        releaseIdsByImdbId.size,
+      updated,
       missingRating,
       failed: failures.length,
       failures: failures

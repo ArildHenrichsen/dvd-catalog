@@ -3,9 +3,12 @@
 import { useState } from "react";
 
 type UpdateResult = {
+  candidates: number;
   checked: number;
-  updated: number;
+  validLinks: number;
   invalidLinks: number;
+  uniqueImdbIds: number;
+  updated: number;
   missingRating: number;
   failed: number;
   failures?: string[];
@@ -13,15 +16,18 @@ type UpdateResult = {
 
 export default function ImdbRatingsAdminPage() {
   const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<UpdateResult | null>(
-    null,
-  );
+
+  const [result, setResult] =
+    useState<UpdateResult | null>(null);
+
   const [error, setError] = useState("");
+
   const [controller, setController] =
     useState<AbortController | null>(null);
 
   async function updateMissingRatings() {
-    const abortController = new AbortController();
+    const abortController =
+      new AbortController();
 
     setController(abortController);
     setBusy(true);
@@ -50,7 +56,9 @@ export default function ImdbRatingsAdminPage() {
 
       if (!response.ok) {
         throw new Error(
-          body && "error" in body && body.error
+          body &&
+            "error" in body &&
+            body.error
             ? body.error
             : "IMDb-score kunne ikke oppdateres",
         );
@@ -97,18 +105,26 @@ export default function ImdbRatingsAdminPage() {
     <main className="page-shell">
       <div className="page-header">
         <div>
-          <p className="eyebrow">Adminverktøy</p>
+          <p className="eyebrow">
+            Adminverktøy
+          </p>
+
           <h1>Oppdater IMDb-scorer</h1>
 
           <p className="page-intro">
-            Finn DVD-er som mangler IMDb-score, og hent
-            rating fra IMDbs offisielle ratingsdatasett.
-            Bare feltet for IMDb-score blir oppdatert.
+            Finn DVD-er som mangler
+            IMDb-score, og hent rating fra
+            IMDbs offisielle ratingsdatasett.
+            Bare feltet for IMDb-score blir
+            oppdatert.
           </p>
         </div>
 
-        <a className="button secondary" href="/">
-          Tilbake til samlingen
+        <a
+          className="button secondary"
+          href="/settings"
+        >
+          Tilbake til innstillinger
         </a>
       </div>
 
@@ -116,16 +132,21 @@ export default function ImdbRatingsAdminPage() {
         <h2>Manglende IMDb-scorer</h2>
 
         <p>
-          Verktøyet kontrollerer DVD-er der IMDb-score
-          mangler. DVD-er uten gyldig IMDb-lenke blir
+          Verktøyet kontrollerer DVD-er der
+          IMDb-score er tom eller satt til 0.
+          DVD-er uten gyldig IMDb-lenke blir
           hoppet over.
         </p>
 
         <div className="admin-warning">
-          <strong>Ingen andre DVD-felt endres.</strong>
+          <strong>
+            Ingen andre DVD-felt endres.
+          </strong>
+
           <span>
-            Tittel, år, cover, region, utgave, merknad og
-            IMDb-lenke beholdes som før.
+            Tittel, år, cover, region, utgave,
+            merknad og IMDb-lenke beholdes som
+            før.
           </span>
         </div>
 
@@ -153,14 +174,20 @@ export default function ImdbRatingsAdminPage() {
         </div>
 
         {busy && (
-          <p className="field-help" role="status">
-            IMDb-datasettet lastes ned og gjennomgås.
-            Dette kan ta litt tid.
+          <p
+            className="field-help"
+            role="status"
+          >
+            IMDb-datasettet lastes ned og
+            gjennomgås. Dette kan ta litt tid.
           </p>
         )}
 
         {error && (
-          <div className="error" role="alert">
+          <div
+            className="error"
+            role="alert"
+          >
             {error}
           </div>
         )}
@@ -172,20 +199,42 @@ export default function ImdbRatingsAdminPage() {
           >
             <h3>Oppdateringen er ferdig</h3>
 
+            {result.candidates === 0 && (
+              <p>
+                Ingen DVD-er med tom score eller
+                score 0 ble funnet.
+              </p>
+            )}
+
             <dl className="admin-result-grid">
+              <div>
+                <dt>Uten score</dt>
+                <dd>{result.candidates}</dd>
+              </div>
+
               <div>
                 <dt>Kontrollert</dt>
                 <dd>{result.checked}</dd>
               </div>
 
               <div>
-                <dt>Oppdatert</dt>
-                <dd>{result.updated}</dd>
+                <dt>Gyldig IMDb-lenke</dt>
+                <dd>{result.validLinks}</dd>
               </div>
 
               <div>
                 <dt>Ugyldig IMDb-lenke</dt>
                 <dd>{result.invalidLinks}</dd>
+              </div>
+
+              <div>
+                <dt>Unike IMDb-filmer</dt>
+                <dd>{result.uniqueImdbIds}</dd>
+              </div>
+
+              <div>
+                <dt>Oppdatert</dt>
+                <dd>{result.updated}</dd>
               </div>
 
               <div>
@@ -202,12 +251,16 @@ export default function ImdbRatingsAdminPage() {
             {result.failures &&
               result.failures.length > 0 && (
                 <details className="admin-failures">
-                  <summary>Vis tekniske feil</summary>
+                  <summary>
+                    Vis tekniske feil
+                  </summary>
 
                   <ul>
                     {result.failures.map(
                       (failure, index) => (
-                        <li key={`${failure}-${index}`}>
+                        <li
+                          key={`${failure}-${index}`}
+                        >
                           {failure}
                         </li>
                       ),
@@ -219,8 +272,8 @@ export default function ImdbRatingsAdminPage() {
         )}
 
         <p className="field-help imdb-attribution">
-          IMDb-data brukes fra IMDbs offisielle
-          ikke-kommersielle datasett.
+          IMDb-data brukes fra IMDbs
+          offisielle ikke-kommersielle datasett.
         </p>
       </section>
     </main>
