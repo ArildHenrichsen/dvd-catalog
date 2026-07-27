@@ -3,17 +3,6 @@ import { releaseSchema } from "@/lib/validation";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { hasWriteAccess } from "@/lib/write-auth";
 
-type DuplicateMatch = {
-  id: string;
-  original_title: string;
-  alternative_title: string | null;
-  release_year: number | null;
-  is_wishlist: boolean;
-  edition: string | null;
-  region: string | null;
-  imdb_url: string | null;
-};
-
 function normalizeImdbUrl(
   value: string | null | undefined,
 ): string | null {
@@ -21,12 +10,18 @@ function normalizeImdbUrl(
     return null;
   }
 
-  const match = value.match(
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  const match = trimmed.match(
     /\/title\/(tt\d{7,10})/i,
   );
 
   if (!match) {
-    return value.trim();
+    return trimmed;
   }
 
   return `https://www.imdb.com/title/${match[1].toLowerCase()}/`;
@@ -100,23 +95,16 @@ export async function POST(req: Request) {
       }
     }
 
-    const { data: matches, error: matchError } =
-      await supabase
-        .from("releases")
-        .select(
-          [
-            "id",
-            "original_title",
-            "alternative_title",
-            "release_year",
-            "is_wishlist",
-            "edition",
-            "region",
-            "imdb_url",
-          ].join(","),
-        )
-        .or(filters.join(","))
-        .limit(10);
+    const {
+      data: matches,
+      error: matchError,
+    } = await supabase
+      .from("releases")
+      .select(
+        "id, original_title, alternative_title, release_year, is_wishlist, edition, region, imdb_url",
+      )
+      .or(filters.join(","))
+      .limit(10);
 
     if (matchError) {
       return NextResponse.json(
@@ -129,14 +117,12 @@ export async function POST(req: Request) {
       );
     }
 
-    if (matches?.length) {
+    if (matches && matches.length > 0) {
       return NextResponse.json(
         {
-          error:
-            "Filmen finnes allerede",
+          error: "Filmen finnes allerede",
           code: "POSSIBLE_DUPLICATE",
-          matches:
-            matches as DuplicateMatch[],
+          matches,
         },
         {
           status: 409,
@@ -147,10 +133,9 @@ export async function POST(req: Request) {
 
   const dataToInsert = {
     ...parsed.data,
-    imdb_url:
-      normalizeImdbUrl(
-        parsed.data.imdb_url,
-      ),
+    imdb_url: normalizeImdbUrl(
+      parsed.data.imdb_url,
+    ),
     is_wishlist:
       parsed.data.is_wishlist ?? false,
   };
