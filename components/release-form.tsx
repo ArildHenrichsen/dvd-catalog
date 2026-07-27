@@ -80,8 +80,10 @@ export function ReleaseForm({
     try {
       const formData = new FormData(event.currentTarget);
 
-      const payload: Record<string, FormDataEntryValue | null> =
-        Object.fromEntries(formData.entries());
+      const payload: Record<
+        string,
+        FormDataEntryValue | null
+      > = Object.fromEntries(formData.entries());
 
       payload.cover_path = coverPath;
       payload.imdb_url = imdbUrl.trim() || null;
@@ -128,6 +130,49 @@ export function ReleaseForm({
 
   return (
     <form className="form panel" onSubmit={submit}>
+      <section className="cover-edit-section">
+        <label>
+          Coverbilde
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+            capture="environment"
+            disabled={busy}
+            onChange={async (event) => {
+              const file = event.target.files?.[0];
+
+              if (!file) {
+                return;
+              }
+
+              const temporaryPreview =
+                URL.createObjectURL(file);
+
+              setPreview(temporaryPreview);
+
+              try {
+                await upload(file);
+              } catch (err) {
+                setError(
+                  err instanceof Error
+                    ? err.message
+                    : "Opplasting av cover feilet",
+                );
+              }
+            }}
+          />
+        </label>
+
+        {preview && (
+          <div className="cover detail-cover">
+            <img
+              src={preview}
+              alt="Forhåndsvisning av cover"
+            />
+          </div>
+        )}
+      </section>
+
       <label>
         Originaltittel
         <input
@@ -141,7 +186,9 @@ export function ReleaseForm({
         Alternativ tittel
         <input
           name="alternative_title"
-          defaultValue={defaults?.alternative_title || ""}
+          defaultValue={
+            defaults?.alternative_title || ""
+          }
         />
       </label>
 
@@ -221,44 +268,6 @@ export function ReleaseForm({
           defaultValue={defaults?.notes || ""}
         />
       </label>
-
-      <label>
-        Cover
-        <input
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          capture="environment"
-          disabled={busy}
-          onChange={async (event) => {
-            const file = event.target.files?.[0];
-
-            if (!file) {
-              return;
-            }
-
-            setPreview(URL.createObjectURL(file));
-
-            try {
-              await upload(file);
-            } catch (err) {
-              setError(
-                err instanceof Error
-                  ? err.message
-                  : "Opplasting av cover feilet",
-              );
-            }
-          }}
-        />
-      </label>
-
-      {preview && (
-        <div className="cover detail-cover">
-          <img
-            src={preview}
-            alt="Forhåndsvisning av cover"
-          />
-        </div>
-      )}
 
       {error && (
         <p className="error" role="alert">
