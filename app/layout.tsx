@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
 import Link from "next/link";
+import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -50,6 +50,13 @@ export default function RootLayout({
                 href="/api/export"
               >
                 Eksporter
+              </Link>
+
+              <Link
+                className="button"
+                href="/movie-night"
+              >
+                Hva skal vi se?
               </Link>
 
               <Link
