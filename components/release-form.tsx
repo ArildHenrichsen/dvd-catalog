@@ -145,10 +145,6 @@ export function ReleaseForm({
       parsedNotes.selectedLabels,
     );
 
-  const [customNotes, setCustomNotes] = useState(
-    parsedNotes.customText,
-  );
-
   const [autoKeywords, setAutoKeywords] = useState(
     defaults?.auto_keywords ?? [],
   );
@@ -591,7 +587,7 @@ export function ReleaseForm({
     payload.notes = formatReleaseNotes({
       discCount,
       selectedLabels: selectedNoteLabels,
-      customText: customNotes,
+      customText: "",
     });
     payload.manual_keywords = splitKeywordInput(manualKeywords);
     payload.metadata_provider =
@@ -721,12 +717,6 @@ export function ReleaseForm({
     setPendingPayload(null);
   }
 
-  const notePreview = formatReleaseNotes({
-    discCount,
-    selectedLabels: selectedNoteLabels,
-    customText: customNotes,
-  });
-
   return (
     <>
       <form
@@ -778,29 +768,6 @@ export function ReleaseForm({
             </div>
           )}
         </section>
-
-        <label className="wishlist-toggle">
-          <input
-            type="checkbox"
-            name="is_wishlist"
-            checked={isWishlist}
-            onChange={(event) =>
-              setIsWishlist(
-                event.target.checked,
-              )
-            }
-          />
-
-          <span className="wishlist-toggle-copy">
-            <strong>På ønskelisten</strong>
-
-            <small>
-              {isWishlist
-                ? "DVD-en vises på ønskelisten."
-                : "DVD-en registreres som en del av samlingen."}
-            </small>
-          </span>
-        </label>
 
         <MovieMetadataAssistant
           coverFile={coverFile}
@@ -930,6 +897,32 @@ export function ReleaseForm({
           }}
         />
 
+        <fieldset className="status-radio-group">
+          <legend>Status</legend>
+
+          <label className="status-radio-option">
+            <input
+              type="radio"
+              name="collection_status"
+              checked={!isWishlist}
+              onChange={() => setIsWishlist(false)}
+            />
+
+            <span>I samlingen</span>
+          </label>
+
+          <label className="status-radio-option">
+            <input
+              type="radio"
+              name="collection_status"
+              checked={isWishlist}
+              onChange={() => setIsWishlist(true)}
+            />
+
+            <span>På ønskelisten</span>
+          </label>
+        </fieldset>
+
         {release ? (
           <>
             <div className="disc-count-inline">
@@ -980,45 +973,6 @@ export function ReleaseForm({
                 ))}
               </div>
             </fieldset>
-
-            <label>
-              Merknad
-
-              <textarea
-                name="notes"
-                value={customNotes}
-                onChange={(event) =>
-                  setCustomNotes(event.target.value)
-                }
-                placeholder="Egne tillegg, f.eks. Svensk cover"
-              />
-            </label>
-
-            <p className="muted small">
-              Valgene over lagres i samme merknadsfelt.
-              {notePreview
-                ? ` Resultat: ${notePreview}`
-                : " Resultat: –"}
-            </p>
-
-            <label>
-              Manuelle nøkkelord (kommaseparert)
-              <input
-                name="manual_keywords"
-                value={manualKeywords}
-                onChange={(event) =>
-                  setManualKeywords(event.target.value)
-                }
-                placeholder="f.eks. genre:action, mood:dark, noir"
-              />
-            </label>
-
-            {!!autoKeywords.length && (
-              <p className="muted small">
-                Automatiske nøkkelord:{" "}
-                {autoKeywords.join(", ")}
-              </p>
-            )}
 
             <details className="metadata-collapsible">
               <summary>
@@ -1344,12 +1298,41 @@ export function ReleaseForm({
                     />
                   </label>
                 </div>
+
+                <label>
+                  Manuelle nøkkelord (kommaseparert)
+                  <input
+                    name="manual_keywords"
+                    value={manualKeywords}
+                    onChange={(event) =>
+                      setManualKeywords(event.target.value)
+                    }
+                    placeholder="f.eks. genre:action, mood:dark, noir"
+                  />
+                </label>
+
+                {!!autoKeywords.length && (
+                  <p className="muted small">
+                    Automatiske nøkkelord:{" "}
+                    {autoKeywords.join(", ")}
+                  </p>
+                )}
               </div>
             </details>
           </>
         ) : (
           <>
-            <section className="panel">
+            <details
+              className="metadata-collapsible"
+              open
+            >
+              <summary>
+                <span className="metadata-collapsible-chevron" />
+                Vis metadata
+              </summary>
+
+              <div className="metadata-collapsible-body">
+                <section className="panel">
               <div className="metadata-assistant-heading">
                 <strong>Metadata fra TMDB</strong>
               </div>
@@ -1448,7 +1431,7 @@ export function ReleaseForm({
                   </div>
                 </div>
               )}
-            </section>
+                </section>
 
             <label>
               Originaltittel
@@ -1489,7 +1472,7 @@ export function ReleaseForm({
               />
             </label>
 
-            <div className="two-col">
+                <div className="two-col">
               <label>
                 Utgivelsesår
 
@@ -1657,7 +1640,28 @@ export function ReleaseForm({
                   placeholder="Action, Thriller, Drama"
                 />
               </label>
-            </div>
+                </div>
+
+                <label>
+                  Manuelle nøkkelord (kommaseparert)
+                  <input
+                    name="manual_keywords"
+                    value={manualKeywords}
+                    onChange={(event) =>
+                      setManualKeywords(event.target.value)
+                    }
+                    placeholder="f.eks. genre:action, mood:dark, noir"
+                  />
+                </label>
+
+                {!!autoKeywords.length && (
+                  <p className="muted small">
+                    Automatiske nøkkelord:{" "}
+                    {autoKeywords.join(", ")}
+                  </p>
+                )}
+              </div>
+            </details>
 
             <div className="disc-count-inline">
               <span>Antall discer</span>
@@ -1708,55 +1712,8 @@ export function ReleaseForm({
               </div>
             </fieldset>
 
-            <label>
-              Merknad
-
-              <textarea
-                name="notes"
-                value={customNotes}
-                onChange={(event) =>
-                  setCustomNotes(event.target.value)
-                }
-                placeholder="Egne tillegg, f.eks. Svensk cover"
-              />
-            </label>
-
-            <p className="muted small">
-              Valgene over lagres i samme merknadsfelt.
-              {notePreview
-                ? ` Resultat: ${notePreview}`
-                : " Resultat: –"}
-            </p>
-
-            <label>
-              Manuelle nøkkelord (kommaseparert)
-              <input
-                name="manual_keywords"
-                value={manualKeywords}
-                onChange={(event) =>
-                  setManualKeywords(event.target.value)
-                }
-                placeholder="f.eks. genre:action, mood:dark, noir"
-              />
-            </label>
-
-            {!!autoKeywords.length && (
-              <p className="muted small">
-                Automatiske nøkkelord:{" "}
-                {autoKeywords.join(", ")}
-              </p>
-            )}
           </>
         )}
-
-        <p className="muted">
-          Status:{" "}
-          <strong>
-            {isWishlist
-              ? "På ønskelisten"
-              : "I samlingen"}
-          </strong>
-        </p>
 
         {error && (
           <p

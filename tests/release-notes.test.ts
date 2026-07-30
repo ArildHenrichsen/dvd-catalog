@@ -30,6 +30,16 @@ describe("release note helpers", () => {
     ).toBe("Extended");
   });
 
+  it("tillater tom merknad når ingenting er valgt", () => {
+    expect(
+      formatReleaseNotes({
+        discCount: 1,
+        selectedLabels: [],
+        customText: "",
+      }),
+    ).toBeNull();
+  });
+
   it("beholder stabil etikett-rekkefølge", () => {
     expect(
       formatReleaseNotes({
