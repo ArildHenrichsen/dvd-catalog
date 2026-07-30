@@ -1,0 +1,11 @@
+.dvd-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 202.8px), 202.8px));
+  justify-content: center;
+  gap: 1rem;
+}
+
+.dvd-card {
+  width: 100%;
+  max-width: 202.8px;
+}
