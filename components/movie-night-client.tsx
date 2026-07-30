@@ -164,4 +164,8 @@ export default function MovieNightClient() {
       <main style={{ marginTop: "1rem" }}>{content}</main>
     </div>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 082fea74e1dbafce28280b5fc2a32ba8782142ef

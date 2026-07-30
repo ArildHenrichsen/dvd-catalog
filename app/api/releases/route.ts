@@ -75,8 +75,13 @@ export async function POST(req: Request) {
         parsed.data.imdb_url,
       );
 
+    // Encode user-provided values before building the raw .or() filter string
+    // to avoid commas or other special characters breaking the comma-separated
+    // condition list that PostgREST/Supabase expects.
+    const encodedTitle = encodeURIComponent(title);
+
     const filters: string[] = [
-      `original_title.ilike.${title}`,
+      `original_title.ilike.${encodedTitle}`,
     ];
 
     if (normalizedImdbUrl) {
@@ -89,8 +94,11 @@ export async function POST(req: Request) {
           `imdb_url.ilike.%${imdbId}%`,
         );
       } else {
+        const encodedImdb = encodeURIComponent(
+          normalizedImdbUrl,
+        );
         filters.push(
-          `imdb_url.eq.${normalizedImdbUrl}`,
+          `imdb_url.eq.${encodedImdb}`,
         );
       }
     }
