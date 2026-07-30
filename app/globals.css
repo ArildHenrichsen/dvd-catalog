@@ -1379,6 +1379,21 @@ dd {
 }
 
 /* Manual movie-title search clear button */
+.metadata-search-row {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+.metadata-search-row > button {
+  flex: 0 0 auto;
+}
+
+.metadata-search-row .metadata-search-input-wrap {
+  flex: 1 1 17rem;
+}
+
 .metadata-search-input-wrap {
   position: relative;
   flex: 1;
@@ -1434,6 +1449,12 @@ dd {
 .metadata-search-clear:disabled {
   cursor: default;
   opacity: .35;
+}
+
+@media (max-width: 600px) {
+  .metadata-search-row > button {
+    width: 100%;
+  }
 }
 
 .collection-status-badge {

@@ -56,6 +56,22 @@ describe("release note helpers", () => {
     );
   });
 
+  it("samler flere edition-valg til én avsluttende edition", () => {
+    expect(
+      formatReleaseNotes({
+        discCount: 2,
+        selectedLabels: [
+          "Extended",
+          "Special Edition",
+          "Collector's Edition",
+        ],
+        customText: "",
+      }),
+    ).toBe(
+      "2-disc Extended Special Collector's Edition",
+    );
+  });
+
   it("prefyller kontroller og bevarer ukjent fritekst", () => {
     expect(
       parseReleaseNotes(
@@ -81,6 +97,22 @@ describe("release note helpers", () => {
     ).toBe(
       "2-disc Extended Collector's Edition Svensk cover",
     );
+  });
+
+  it("kan lese inn normalisert edition-tekst igjen", () => {
+    expect(
+      parseReleaseNotes(
+        "2-disc Extended Special Collector's Edition Svensk cover",
+      ),
+    ).toEqual({
+      discCount: 2,
+      selectedLabels: [
+        "Extended",
+        "Special Edition",
+        "Collector's Edition",
+      ],
+      customText: "Svensk cover",
+    });
   });
 
   it("bevarer linjeskift i egen fritekst", () => {

@@ -16,6 +16,8 @@ export type ParsedReleaseNotes = {
   customText: string;
 };
 
+const editionSuffixPattern = /\bedition\b/i;
+
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -35,6 +37,63 @@ function normalizeCustomText(value: string) {
     .filter(Boolean)
     .join("\n");
 }
+
+function isEditionLabel(label: StructuredNoteLabel) {
+  return editionSuffixPattern.test(label);
+}
+
+function getEditionLabelPrefix(
+  label: StructuredNoteLabel,
+) {
+  const match = label.match(
+    /^(.*?)(?:\s+edition)?$/i,
+  );
+
+  return match?.[1].trim() || "";
+}
+
+function formatEditionLabels(
+  labels: StructuredNoteLabel[],
+) {
+  const prefixes = labels
+    .filter(isEditionLabel)
+    .map(getEditionLabelPrefix)
+    .filter(Boolean);
+
+  if (!prefixes.length) {
+    return null;
+  }
+
+  return `${prefixes.join(" ")} Edition`;
+}
+
+function getEditionLabelCombinations() {
+  const editionLabels = structuredNoteLabels.filter(
+    isEditionLabel,
+  );
+
+  const combinations: StructuredNoteLabel[][] = [];
+
+  for (
+    let mask = (1 << editionLabels.length) - 1;
+    mask >= 1;
+    mask -= 1
+  ) {
+    const combination = editionLabels.filter(
+      (_, index) => mask & (1 << index),
+    );
+
+    combinations.push(combination);
+  }
+
+  return combinations.sort(
+    (left, right) =>
+      right.length - left.length,
+  );
+}
+
+const editionLabelCombinations =
+  getEditionLabelCombinations();
 
 export function parseReleaseNotes(
   note: string | null | undefined,
@@ -58,6 +117,10 @@ export function parseReleaseNotes(
   const selectedLabels: StructuredNoteLabel[] = [];
 
   for (const label of structuredNoteLabels) {
+    if (isEditionLabel(label)) {
+      continue;
+    }
+
     const pattern = new RegExp(
       `(^|[\\t \\r\\n])${escapeRegExp(label)}(?=[\\t \\r\\n]|$)`,
       "i",
@@ -71,6 +134,29 @@ export function parseReleaseNotes(
     remaining = remaining
       .replace(pattern, "$1")
       .trim();
+  }
+
+  for (const labels of editionLabelCombinations) {
+    const editionText = formatEditionLabels(labels);
+
+    if (!editionText) {
+      continue;
+    }
+
+    const pattern = new RegExp(
+      `(^|[\\t \\r\\n])${escapeRegExp(editionText)}(?=[\\t \\r\\n]|$)`,
+      "i",
+    );
+
+    if (!pattern.test(remaining)) {
+      continue;
+    }
+
+    selectedLabels.push(...labels);
+    remaining = remaining
+      .replace(pattern, "$1")
+      .trim();
+    break;
   }
 
   return {
@@ -96,10 +182,25 @@ export function formatReleaseNotes({
     parts.push(`${normalizedDiscCount}-disc`);
   }
 
+  const editionLabels: StructuredNoteLabel[] = [];
+
   for (const label of structuredNoteLabels) {
-    if (selected.has(label)) {
+    if (!selected.has(label)) {
+      continue;
+    }
+
+    if (isEditionLabel(label)) {
+      editionLabels.push(label);
+    } else {
       parts.push(label);
     }
+  }
+
+  const editionText =
+    formatEditionLabels(editionLabels);
+
+  if (editionText) {
+    parts.push(editionText);
   }
 
   const structuredNote = parts.join(" ");
