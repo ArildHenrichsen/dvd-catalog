@@ -55,13 +55,10 @@ export default function MovieNightClient() {
   const pickTwoOther = useCallback(() => {
     if (!result) return;
     const all = result.extras ?? [];
-    // If extras length < 2, try re-generating
     if (all.length < 2) {
-      // shuffle existing matches (not ideal) — ask user to regenerate
       setError("Færre enn to ekstra treff tilgjengelig. Prøv 'Nytt tema' i stedet.");
       return;
     }
-    // pick two random extras
     const shuffled = [...all].sort(() => Math.random() - 0.5);
     const chosen = shuffled.slice(0, 2);
     const films: ApiFilm[] = chosen.map(r => ({
@@ -152,20 +149,5 @@ export default function MovieNightClient() {
   }, [loading, error, result, generate, pickTwoOther, showAllMatches]);
 
   return (
-    <div className="movie-night container" style={{ padding: "1rem 0" }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div>
-          <h2>Hva skal vi se?</h2>
-          <p className="muted">Trykk «Generer filmkveld» for et tilfeldig tema og to filmer fra samlingen.</p>
-        </div>
-        <div>{loading ? <span className="muted">Laster…</span> : null}</div>
-      </header>
-
-      <main style={{ marginTop: "1rem" }}>{content}</main>
-    </div>
-  );
-<<<<<<< HEAD
-}
-=======
-}
->>>>>>> 082fea74e1dbafce28280b5fc2a32ba8782142ef
+    <
+

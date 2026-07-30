@@ -7,8 +7,4 @@ export const metadata = {
 
 export default function Page() {
   return <MovieNightClient />;
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 082fea74e1dbafce28280b5fc2a32ba8782142ef
