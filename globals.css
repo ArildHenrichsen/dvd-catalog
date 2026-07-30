@@ -298,32 +298,83 @@ dialog::backdrop { background: rgb(0 0 0 / .58); backdrop-filter: blur(4px); }
 .wishlist-toggle-copy small { color: var(--muted); font-weight: 550; line-height: 1.35; }
 .note-annotation-fieldset {
   display: grid;
-  gap: .7rem;
+  gap: .45rem;
   margin: 0;
-  padding: .82rem;
+  padding: .65rem .82rem;
   border: 1px solid var(--border);
   border-radius: 14px;
 }
 .note-annotation-fieldset legend {
   padding: 0 .32rem;
-  font-size: .9rem;
+  font-size: .84rem;
   font-weight: 700;
 }
 .note-annotation-options {
   display: grid;
   grid-template-columns: repeat(2,minmax(0,1fr));
-  gap: .6rem;
+  gap: .25rem;
 }
 .note-annotation-option {
   display: flex;
   align-items: center;
-  gap: .55rem;
+  gap: .4rem;
+  font-size: .84rem;
+  line-height: 1.3;
 }
 .note-annotation-option input {
-  width: 18px;
-  min-height: 18px;
-  height: 18px;
+  flex: 0 0 auto;
+  width: 14px;
+  min-height: 14px;
+  height: 14px;
   margin: 0;
+  padding: 0;
+}
+.disc-count-inline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .62rem;
+  font-size: .9rem;
+  font-weight: 750;
+  color: var(--muted);
+}
+.disc-count-inline select {
+  width: auto;
+  min-height: 36px;
+  padding: .32rem .62rem;
+}
+.metadata-collapsible {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card);
+}
+.metadata-collapsible > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .72rem .9rem;
+  font-size: .9rem;
+  font-weight: 750;
+  color: var(--muted);
+  user-select: none;
+}
+.metadata-collapsible > summary::-webkit-details-marker { display: none; }
+.metadata-collapsible-chevron {
+  width: .52rem;
+  height: .52rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform .18s ease;
+  flex: 0 0 auto;
+}
+.metadata-collapsible[open] > summary .metadata-collapsible-chevron { transform: rotate(225deg); }
+.metadata-collapsible-body {
+  display: grid;
+  gap: 1rem;
+  padding: 0 .9rem .9rem;
 }
 
 .wishlist-card-label,
@@ -363,13 +414,11 @@ dd { margin: .18rem 0 0; }
   border-radius: 15px;
   background: linear-gradient(145deg, var(--accent-soft), color-mix(in srgb, var(--card) 92%, transparent));
 }
-.metadata-assistant-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
-.metadata-assistant-heading > div { display: grid; gap: .2rem; }
-.metadata-assistant-heading small, .tmdb-credit, .assistant-status { color: var(--muted); }
-.tmdb-credit { font-size: .72rem; white-space: nowrap; }
-.metadata-assistant-actions { display: grid; grid-template-columns: auto 1fr; gap: .6rem; align-items: end; }
-.metadata-search-row { display: grid; grid-template-columns: 1fr auto; gap: .5rem; }
-.assistant-status { margin: 0; font-size: .86rem; }
+.metadata-assistant-heading { display: flex; align-items: center; gap: .5rem; }
+.metadata-assistant-actions { display: grid; gap: .55rem; }
+.metadata-assistant-actions > button { width: fit-content; }
+.metadata-search-row { display: grid; grid-template-columns: 1fr auto; gap: .5rem; max-width: 420px; }
+.assistant-status { margin: 0; font-size: .86rem; color: var(--muted); }
 .movie-results { display: grid; gap: .6rem; max-height: 440px; overflow: auto; padding-right: .2rem; }
 .movie-result {
   display: grid;
@@ -390,9 +439,8 @@ dd { margin: .18rem 0 0; }
 .movie-result .button, .movie-result button { min-height: 36px; padding: .45rem .7rem; }
 
 @media (max-width: 600px) {
-  .metadata-assistant-heading { display: grid; }
-  .metadata-assistant-actions { grid-template-columns: 1fr; }
   .metadata-assistant-actions > button { width: 100%; }
+  .metadata-search-row { max-width: 100%; }
   .movie-result { grid-template-columns: 48px minmax(0,1fr); }
   .movie-result-poster { width: 48px; }
   .movie-result > button { grid-column: 1 / -1; width: 100%; }
