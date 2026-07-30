@@ -2,14 +2,20 @@ import Link from "next/link";
 import type { Release } from "@/lib/types";
 
 export function ReleaseCard({ release }: { release: Release }) {
+  const src = release.cover_url || release.thumbnail_url || "";
+  const srcSet = release.thumbnail_url && release.cover_url ? `${release.thumbnail_url} 320w, ${release.cover_url} 1600w` : undefined;
+
   return (
     <Link className="card" href={`/releases/${release.id}`}>
       <div className="cover">
         {(release.thumbnail_url || release.cover_url) ? (
           <img
-            src={release.thumbnail_url || release.cover_url || ""}
+            src={src}
+            srcSet={srcSet}
+            sizes="(max-width: 600px) 320px, 1600px"
             alt={`Cover: ${release.original_title}`}
             loading="lazy"
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
         ) : (
           <span className="cover-placeholder muted">
