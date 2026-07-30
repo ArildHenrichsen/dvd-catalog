@@ -923,6 +923,74 @@ export function ReleaseForm({
           </label>
         </fieldset>
 
+        <label>
+          Originaltittel
+
+          <input
+            name="original_title"
+            required
+            value={originalTitle}
+            onChange={(event) => {
+              markManualField("original_title");
+              setOriginalTitle(event.target.value);
+            }}
+          />
+        </label>
+
+        <label>
+          Alternativ tittel
+
+          <input
+            name="alternative_title"
+            value={alternativeTitle}
+            onChange={(event) => {
+              markManualField("alternative_title");
+              setAlternativeTitle(event.target.value);
+            }}
+          />
+        </label>
+
+        <div className="two-col">
+          <label>
+            DVD-region
+
+            <select
+              name="region"
+              value={region}
+              onChange={(event) =>
+                setRegion(event.target.value)
+              }
+            >
+              <option value="2">2</option>
+              <option value="1">1</option>
+            </select>
+          </label>
+
+          <label>
+            Utgave / marked
+
+            <select
+              name="edition"
+              value={edition}
+              onChange={(event) =>
+                setEdition(event.target.value)
+              }
+            >
+              <option value="Nordisk">
+                Nordisk
+              </option>
+
+              <option value="UK">UK</option>
+
+              <option value="US">US</option>
+
+              <option value="Asia">Asia</option>
+
+              <option value="Annet">Annet</option>
+            </select>
+          </label>
+        </div>
+
         {release ? (
           <>
             <div className="disc-count-inline">
@@ -1082,45 +1150,6 @@ export function ReleaseForm({
                   )}
                 </section>
 
-                <label>
-                  Originaltittel
-
-                  <input
-                    name="original_title"
-                    required
-                    value={originalTitle}
-                    onChange={(event) =>
-                      {
-                        markManualField(
-                          "original_title",
-                        );
-                        setOriginalTitle(
-                          event.target.value,
-                        );
-                      }
-                    }
-                  />
-                </label>
-
-                <label>
-                  Alternativ tittel
-
-                  <input
-                    name="alternative_title"
-                    value={alternativeTitle}
-                    onChange={(event) =>
-                      {
-                        markManualField(
-                          "alternative_title",
-                        );
-                        setAlternativeTitle(
-                          event.target.value,
-                        );
-                      }
-                    }
-                  />
-                </label>
-
                 <div className="two-col">
                   <label>
                     Utgivelsesår
@@ -1192,59 +1221,6 @@ export function ReleaseForm({
                     placeholder="https://www.imdb.com/title/tt..."
                   />
                 </label>
-
-                <div className="two-col">
-                  <label>
-                    DVD-region
-
-                    <select
-                      name="region"
-                      value={region}
-                      onChange={(event) =>
-                        setRegion(
-                          event.target.value,
-                        )
-                      }
-                    >
-                      <option value="2">2</option>
-                      <option value="1">1</option>
-                    </select>
-                  </label>
-
-                  <label>
-                    Utgave / marked
-
-                    <select
-                      name="edition"
-                      value={edition}
-                      onChange={(event) =>
-                        setEdition(
-                          event.target.value,
-                        )
-                      }
-                    >
-                      <option value="Nordisk">
-                        Nordisk
-                      </option>
-
-                      <option value="UK">
-                        UK
-                      </option>
-
-                      <option value="US">
-                        US
-                      </option>
-
-                      <option value="Asia">
-                        Asia
-                      </option>
-
-                      <option value="Annet">
-                        Annet
-                      </option>
-                    </select>
-                  </label>
-                </div>
 
                 <label>
                   Oversikt
@@ -1433,45 +1409,6 @@ export function ReleaseForm({
               )}
                 </section>
 
-            <label>
-              Originaltittel
-
-              <input
-                name="original_title"
-                required
-                value={originalTitle}
-                onChange={(event) =>
-                  {
-                    markManualField(
-                      "original_title",
-                    );
-                    setOriginalTitle(
-                      event.target.value,
-                    );
-                  }
-                }
-              />
-            </label>
-
-            <label>
-              Alternativ tittel
-
-              <input
-                name="alternative_title"
-                value={alternativeTitle}
-                onChange={(event) =>
-                  {
-                    markManualField(
-                      "alternative_title",
-                    );
-                    setAlternativeTitle(
-                      event.target.value,
-                    );
-                  }
-                }
-              />
-            </label>
-
                 <div className="two-col">
               <label>
                 Utgivelsesår
@@ -1535,59 +1472,6 @@ export function ReleaseForm({
                 placeholder="https://www.imdb.com/title/tt..."
               />
             </label>
-
-            <div className="two-col">
-              <label>
-                DVD-region
-
-                <select
-                  name="region"
-                  value={region}
-                  onChange={(event) =>
-                    setRegion(
-                      event.target.value,
-                    )
-                  }
-                >
-                  <option value="2">2</option>
-                  <option value="1">1</option>
-                </select>
-              </label>
-
-              <label>
-                Utgave / marked
-
-                <select
-                  name="edition"
-                  value={edition}
-                  onChange={(event) =>
-                    setEdition(
-                      event.target.value,
-                    )
-                  }
-                >
-                  <option value="Nordisk">
-                    Nordisk
-                  </option>
-
-                  <option value="UK">
-                    UK
-                  </option>
-
-                  <option value="US">
-                    US
-                  </option>
-
-                  <option value="Asia">
-                    Asia
-                  </option>
-
-                  <option value="Annet">
-                    Annet
-                  </option>
-                </select>
-              </label>
-            </div>
 
             <label>
               Oversikt
