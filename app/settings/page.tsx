@@ -56,6 +56,23 @@ export default function SettingsPage() {
             Oppdater manglende IMDb-score
           </Link>
         </div>
+
+        <div className="admin-result">
+          <h2>DVD-metadata</h2>
+
+          <p className="muted">
+            Kjør bulk-berikelse for manglende
+            oversikt, spilletid, sjangre og
+            nøkkelord.
+          </p>
+
+          <Link
+            className="button primary"
+            href="/admin/release-metadata"
+          >
+            Åpne metadata-verktøy
+          </Link>
+        </div>
       </section>
     </article>
   );

@@ -30,13 +30,21 @@ npm test
 npm run build
 ```
 
-## 5. Automatisk nøkkelord-berikelse
+## 5. Automatisk metadata-berikelse
 
-Appen støtter automatisk berikelse av filmmetadata basert på IMDb-ID (`imdb_url`) via TMDB.
+Appen støtter automatisk berikelse av filmmetadata via TMDB.
 
 - Konfigurasjon:
   - `TMDB_READ_ACCESS_TOKEN` må være satt i miljøvariabler.
-- Kjør berikelse for hele samlingen:
+- Opprett/rediger:
+  - Når du velger en film fra coveranalyse eller manuelt søk, lagres TMDB-kilde-ID-en i skjemaet.
+  - Ved lagring fylles manglende metadata automatisk inn uten å overskrive manuelle felt.
+  - På redigeringssiden kan du bruke **Fyll inn manglende metadata** for å hente forslag og se diff før du bruker dem.
+- Adminverktøy:
+  - Gå til `/settings` → **Åpne metadata-verktøy**.
+  - Velg **Kun manglende felt**, **Dry-run** og ønsket batchstørrelse før du starter.
+  - Resultatet viser behandlet/oppdatert/hoppet over/feilet og tekniske feil per DVD.
+- Eksisterende CLI for nøkkelord:
   ```bash
   npm run enrich-keywords
   ```
@@ -44,7 +52,7 @@ Appen støtter automatisk berikelse av filmmetadata basert på IMDb-ID (`imdb_ur
   - `--force` tvinger oppdatering av alle filmer
   - `--stale-days=30` styrer hvor gammel data kan være før refresh
 
-Beriket metadata lagres lokalt i databasen (`auto_keywords`) og i en lokal cache-tabell (`movie_metadata_cache`) slik at anbefalinger ikke avhenger av live API-kall.
+Beriket metadata lagres lokalt i databasen (`overview`, `runtime_minutes`, `genres`, `auto_keywords`) sammen med kilde/proveniens (`metadata_provider`, `metadata_provider_id`, `metadata_last_enriched_at`) og i en lokal cache-tabell (`movie_metadata_cache`) slik at anbefalinger ikke avhenger av live API-kall.
 
 ## 6. Manuelle nøkkelord (override)
 

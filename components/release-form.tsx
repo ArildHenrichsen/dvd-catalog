@@ -7,6 +7,15 @@ import { ImdbScoreButton } from "@/components/imdb-score-button";
 import { MovieMetadataAssistant } from "@/components/movie-metadata-assistant";
 import { splitKeywordInput } from "@/lib/keyword-utils";
 
+type MetadataManualField =
+  | "original_title"
+  | "alternative_title"
+  | "release_year"
+  | "imdb_url"
+  | "overview"
+  | "runtime_minutes"
+  | "genres";
+
 type DuplicateMatch = {
   id: string;
   original_title: string;
@@ -22,6 +31,11 @@ type ReleasePayload = Record<
   string,
   FormDataEntryValue | boolean | string[] | null
 >;
+
+type MetadataPreview = {
+  metadata: Record<string, unknown>;
+  changedFields: string[];
+};
 
 export function ReleaseForm({
   release,
@@ -98,6 +112,378 @@ export function ReleaseForm({
     (defaults?.manual_keywords ?? []).join(", "),
   );
 
+  const [overview, setOverview] = useState(
+    defaults?.overview || "",
+  );
+
+  const [runtimeMinutes, setRuntimeMinutes] =
+    useState(
+      defaults?.runtime_minutes != null
+        ? String(defaults.runtime_minutes)
+        : "",
+    );
+
+  const [genres, setGenres] = useState(
+    (defaults?.genres ?? []).join(", "),
+  );
+
+  const [autoKeywords, setAutoKeywords] = useState(
+    defaults?.auto_keywords ?? [],
+  );
+
+  const [metadataProvider, setMetadataProvider] =
+    useState(
+      defaults?.metadata_provider || "",
+    );
+
+  const [metadataProviderId, setMetadataProviderId] =
+    useState(
+      defaults?.metadata_provider_id || "",
+    );
+
+  const [
+    metadataLastEnrichedAt,
+    setMetadataLastEnrichedAt,
+  ] = useState(
+    defaults?.metadata_last_enriched_at || "",
+  );
+
+  const [
+    metadataManualFields,
+    setMetadataManualFields,
+  ] = useState<MetadataManualField[]>(
+    (defaults?.metadata_manual_fields ??
+      []) as MetadataManualField[],
+  );
+
+  const [
+    metadataPreview,
+    setMetadataPreview,
+  ] = useState<MetadataPreview | null>(null);
+
+  const [
+    metadataBusy,
+    setMetadataBusy,
+  ] = useState(false);
+
+  function markManualField(
+    field: MetadataManualField,
+  ) {
+    setMetadataManualFields((current) =>
+      current.includes(field)
+        ? current
+        : [...current, field],
+    );
+  }
+
+  function splitListInput(value: string) {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  function buildMetadataSnapshot(
+    overrides?: Partial<{
+      original_title: string;
+      alternative_title: string;
+      release_year: string;
+      imdb_url: string;
+      overview: string;
+      runtime_minutes: string;
+      genres: string;
+      metadata_provider: string;
+      metadata_provider_id: string;
+    }>,
+  ) {
+    const nextOriginalTitle =
+      overrides?.original_title ?? originalTitle;
+    const nextAlternativeTitle =
+      overrides?.alternative_title ??
+      alternativeTitle;
+    const nextReleaseYear =
+      overrides?.release_year ?? releaseYear;
+    const nextImdbUrl =
+      overrides?.imdb_url ?? imdbUrl;
+    const nextOverview =
+      overrides?.overview ?? overview;
+    const nextRuntimeMinutes =
+      overrides?.runtime_minutes ??
+      runtimeMinutes;
+    const nextGenres =
+      overrides?.genres ?? genres;
+    const nextProvider =
+      overrides?.metadata_provider ??
+      metadataProvider;
+    const nextProviderId =
+      overrides?.metadata_provider_id ??
+      metadataProviderId;
+
+    return {
+      original_title:
+        nextOriginalTitle.trim(),
+      alternative_title:
+        nextAlternativeTitle.trim() || null,
+      release_year: nextReleaseYear.trim()
+        ? Number(nextReleaseYear)
+        : null,
+      imdb_url: nextImdbUrl.trim() || null,
+      overview: nextOverview.trim() || null,
+      runtime_minutes:
+        nextRuntimeMinutes.trim()
+          ? Number(nextRuntimeMinutes)
+          : null,
+      genres: splitListInput(nextGenres),
+      auto_keywords: autoKeywords,
+      metadata_provider:
+        nextProvider.trim() || null,
+      metadata_provider_id:
+        nextProviderId.trim() || null,
+      metadata_manual_fields:
+        metadataManualFields,
+    };
+  }
+
+  function applyMetadataPreview(
+    metadata: Record<string, unknown>,
+  ) {
+    if (
+      typeof metadata.original_title === "string"
+    ) {
+      setOriginalTitle(metadata.original_title);
+    }
+
+    if (
+      typeof metadata.alternative_title === "string" ||
+      metadata.alternative_title === null
+    ) {
+      setAlternativeTitle(
+        typeof metadata.alternative_title ===
+          "string"
+          ? metadata.alternative_title
+          : "",
+      );
+    }
+
+    if (
+      typeof metadata.release_year === "number"
+    ) {
+      setReleaseYear(String(metadata.release_year));
+    }
+
+    if (
+      typeof metadata.imdb_url === "string" ||
+      metadata.imdb_url === null
+    ) {
+      setImdbUrl(
+        typeof metadata.imdb_url === "string"
+          ? metadata.imdb_url
+          : "",
+      );
+    }
+
+    if (
+      typeof metadata.overview === "string" ||
+      metadata.overview === null
+    ) {
+      setOverview(
+        typeof metadata.overview === "string"
+          ? metadata.overview
+          : "",
+      );
+    }
+
+    if (
+      typeof metadata.runtime_minutes ===
+      "number"
+    ) {
+      setRuntimeMinutes(
+        String(metadata.runtime_minutes),
+      );
+    }
+
+    if (Array.isArray(metadata.genres)) {
+      setGenres(metadata.genres.join(", "));
+    }
+
+    if (
+      typeof metadata.metadata_provider ===
+      "string"
+    ) {
+      setMetadataProvider(
+        metadata.metadata_provider,
+      );
+    }
+
+    if (
+      typeof metadata.metadata_provider_id ===
+      "string"
+    ) {
+      setMetadataProviderId(
+        metadata.metadata_provider_id,
+      );
+    }
+
+    if (
+      typeof metadata.metadata_last_enriched_at ===
+      "string"
+    ) {
+      setMetadataLastEnrichedAt(
+        metadata.metadata_last_enriched_at,
+      );
+    }
+
+    if (
+      typeof metadata.keywords_updated_at ===
+      "string"
+    ) {
+      setMetadataLastEnrichedAt(
+        metadata.keywords_updated_at,
+      );
+    }
+
+    if (Array.isArray(metadata.auto_keywords)) {
+      setAutoKeywords(
+        metadata.auto_keywords.filter(
+          (
+            value,
+          ): value is string =>
+            typeof value === "string",
+        ),
+      );
+    }
+  }
+
+  async function requestMetadataPreview(
+    options?: {
+      force?: boolean;
+      autoApply?: boolean;
+      overrides?: Partial<{
+        original_title: string;
+        alternative_title: string;
+        release_year: string;
+        imdb_url: string;
+        overview: string;
+        metadata_provider: string;
+        metadata_provider_id: string;
+      }>;
+    },
+  ) {
+    const current = buildMetadataSnapshot(
+      options?.overrides,
+    );
+
+    if (
+      !current.metadata_provider_id &&
+      !current.imdb_url &&
+      !current.original_title
+    ) {
+      throw new Error(
+        "Velg en film eller fyll inn tittel først.",
+      );
+    }
+
+    setMetadataBusy(true);
+    setError("");
+
+    try {
+      const response = await fetch(
+        "/api/releases/metadata/enrich",
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            current,
+            source: {
+              provider:
+                current.metadata_provider,
+              providerId:
+                current.metadata_provider_id,
+              title:
+                current.original_title,
+              releaseYear:
+                current.release_year,
+              imdbUrl: current.imdb_url,
+            },
+            options: {
+              force: options?.force,
+            },
+          }),
+        },
+      );
+
+      const json = await response
+        .json()
+        .catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          json?.error ||
+            "Metadata kunne ikke hentes",
+        );
+      }
+
+      const preview = {
+        metadata:
+          (json?.metadata as Record<
+            string,
+            unknown
+          >) ?? {},
+        changedFields: Array.isArray(
+          json?.changedFields,
+        )
+          ? json.changedFields
+          : [],
+      };
+
+      if (options?.autoApply) {
+        applyMetadataPreview(preview.metadata);
+        setMetadataPreview(null);
+      } else {
+        setMetadataPreview(preview);
+      }
+
+      return preview;
+    } finally {
+      setMetadataBusy(false);
+    }
+  }
+
+  function previewFieldValue(field: string) {
+    switch (field) {
+      case "original_title":
+        return originalTitle || "–";
+      case "alternative_title":
+        return alternativeTitle || "–";
+      case "release_year":
+        return releaseYear || "–";
+      case "imdb_url":
+        return imdbUrl || "–";
+      case "overview":
+        return overview || "–";
+      case "runtime_minutes":
+        return runtimeMinutes || "–";
+      case "genres":
+        return genres || "–";
+      default:
+        return "–";
+    }
+  }
+
+  function formatPreviewValue(value: unknown) {
+    if (Array.isArray(value)) {
+      return value.join(", ") || "–";
+    }
+
+    if (value === null || value === undefined || value === "") {
+      return "–";
+    }
+
+    return String(value);
+  }
+
   async function upload(file: File) {
     setBusy(true);
     setError("");
@@ -166,7 +552,17 @@ export function ReleaseForm({
     payload.region = region;
     payload.edition = edition;
     payload.is_wishlist = isWishlist;
+    payload.overview = overview.trim() || null;
+    payload.runtime_minutes =
+      runtimeMinutes.trim() || null;
+    payload.genres = splitListInput(genres);
     payload.manual_keywords = splitKeywordInput(manualKeywords);
+    payload.metadata_provider =
+      metadataProvider.trim() || null;
+    payload.metadata_provider_id =
+      metadataProviderId.trim() || null;
+    payload.metadata_manual_fields =
+      metadataManualFields;
 
     return payload;
   }
@@ -375,32 +771,78 @@ export function ReleaseForm({
             metadata,
             importedCover,
           ) => {
-            setOriginalTitle(
-              metadata.original_title ||
-                originalTitle,
-            );
+            const nextOriginalTitle =
+              metadataManualFields.includes(
+                "original_title",
+              ) &&
+              originalTitle.trim()
+                ? originalTitle
+                : metadata.original_title ||
+                  originalTitle;
 
-            setAlternativeTitle(
-              metadata.alternative_title || "",
+            const nextAlternativeTitle =
+              metadataManualFields.includes(
+                "alternative_title",
+              ) &&
+              alternativeTitle.trim()
+                ? alternativeTitle
+                : metadata.alternative_title ||
+                  "";
+
+            const nextReleaseYear =
+              metadataManualFields.includes(
+                "release_year",
+              ) &&
+              releaseYear.trim()
+                ? releaseYear
+                : metadata.release_year != null
+                  ? String(
+                      metadata.release_year,
+                    )
+                  : releaseYear;
+
+            const nextImdbUrl =
+              metadataManualFields.includes(
+                "imdb_url",
+              ) &&
+              imdbUrl.trim()
+                ? imdbUrl
+                : metadata.imdb_url || "";
+
+            const nextOverview =
+              metadataManualFields.includes(
+                "overview",
+              ) &&
+              overview.trim()
+                ? overview
+                : metadata.overview || overview;
+
+            setOriginalTitle(
+              nextOriginalTitle,
             );
+            setAlternativeTitle(
+              nextAlternativeTitle,
+            );
+            setReleaseYear(nextReleaseYear);
+            setImdbUrl(nextImdbUrl);
+            setOverview(nextOverview);
 
             if (
-              metadata.release_year != null
+              metadata.imdb_score != null &&
+              metadata.imdb_score > 0
             ) {
-              setReleaseYear(
-                String(metadata.release_year),
+              setImdbScore(
+                String(metadata.imdb_score),
               );
             }
 
-            setImdbUrl(
-              metadata.imdb_url || "",
+            setMetadataProvider(
+              metadata.metadata_provider ||
+                "tmdb",
             );
-
-            setImdbScore(
-              metadata.imdb_score != null &&
-                metadata.imdb_score > 0
-                ? String(metadata.imdb_score)
-                : "",
+            setMetadataProviderId(
+              metadata.metadata_provider_id ||
+                "",
             );
 
             if (importedCover) {
@@ -416,8 +858,142 @@ export function ReleaseForm({
               setPreview(importedCover.url);
               setCoverFile(null);
             }
+
+            void requestMetadataPreview({
+            autoApply: true,
+            overrides: {
+              original_title:
+                nextOriginalTitle,
+              alternative_title:
+                nextAlternativeTitle,
+              release_year:
+                nextReleaseYear,
+              imdb_url: nextImdbUrl,
+              overview: nextOverview,
+              metadata_provider:
+                metadata.metadata_provider ||
+                "tmdb",
+              metadata_provider_id:
+                metadata.metadata_provider_id ||
+                "",
+            },
+            }).catch((err) => {
+            setError(
+              err instanceof Error
+                ? err.message
+                : "Metadata kunne ikke hentes",
+            );
+            });
           }}
         />
+
+        <section className="panel">
+          <div className="metadata-assistant-heading">
+            <div>
+              <strong>Metadata fra TMDB</strong>
+              <small>
+                Fyll inn oversikt, spilletid,
+                sjangre og nøkkelord uten å
+                overskrive manuelle felt.
+              </small>
+            </div>
+          </div>
+
+          <div className="form-actions">
+            <button
+              type="button"
+              disabled={metadataBusy || busy}
+              onClick={() =>
+                void requestMetadataPreview()
+                  .catch((err) => {
+                    setError(
+                      err instanceof Error
+                        ? err.message
+                        : "Metadata kunne ikke hentes",
+                    );
+                  })
+              }
+            >
+              {metadataBusy
+                ? "Henter metadata …"
+                : "Fyll inn manglende metadata"}
+            </button>
+          </div>
+
+          {metadataLastEnrichedAt && (
+            <p className="muted small">
+              Sist beriket:{" "}
+              {new Date(
+                metadataLastEnrichedAt,
+              ).toLocaleString("nb-NO")}
+            </p>
+          )}
+
+          {metadataPreview && (
+            <div className="admin-result">
+              <h3>Forslag før lagring</h3>
+
+              {metadataPreview.changedFields.length >
+              0 ? (
+                <ul className="duplicate-list">
+                  {metadataPreview.changedFields.map(
+                    (field) => (
+                      <li
+                        className="duplicate-match"
+                        key={field}
+                      >
+                        <strong>{field}</strong>
+                        <span>
+                          {previewFieldValue(
+                            field,
+                          )}{" "}
+                          →{" "}
+                          {formatPreviewValue(
+                            metadataPreview
+                              .metadata[field],
+                          )}
+                        </span>
+                      </li>
+                    ),
+                  )}
+                </ul>
+              ) : (
+                <p>
+                  Ingen manglende felter kunne
+                  fylles nå.
+                </p>
+              )}
+
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="primary"
+                  disabled={
+                    metadataPreview
+                      .changedFields.length === 0
+                  }
+                  onClick={() => {
+                    applyMetadataPreview(
+                      metadataPreview.metadata,
+                    );
+                    setMetadataPreview(null);
+                  }}
+                >
+                  Bruk metadataforslag
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMetadataPreview(null)
+                  }
+                >
+                  Lukk
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
 
         <label>
           Originaltittel
@@ -427,9 +1003,14 @@ export function ReleaseForm({
             required
             value={originalTitle}
             onChange={(event) =>
-              setOriginalTitle(
-                event.target.value,
-              )
+              {
+                markManualField(
+                  "original_title",
+                );
+                setOriginalTitle(
+                  event.target.value,
+                );
+              }
             }
           />
         </label>
@@ -441,9 +1022,14 @@ export function ReleaseForm({
             name="alternative_title"
             value={alternativeTitle}
             onChange={(event) =>
-              setAlternativeTitle(
-                event.target.value,
-              )
+              {
+                markManualField(
+                  "alternative_title",
+                );
+                setAlternativeTitle(
+                  event.target.value,
+                );
+              }
             }
           />
         </label>
@@ -462,9 +1048,14 @@ export function ReleaseForm({
               }
               value={releaseYear}
               onChange={(event) =>
-                setReleaseYear(
-                  event.target.value,
-                )
+                {
+                  markManualField(
+                    "release_year",
+                  );
+                  setReleaseYear(
+                    event.target.value,
+                  );
+                }
               }
             />
           </label>
@@ -506,9 +1097,12 @@ export function ReleaseForm({
             type="url"
             value={imdbUrl}
             onChange={(event) =>
-              setImdbUrl(
-                event.target.value,
-              )
+              {
+                markManualField("imdb_url");
+                setImdbUrl(
+                  event.target.value,
+                );
+              }
             }
             placeholder="https://www.imdb.com/title/tt..."
           />
@@ -568,6 +1162,59 @@ export function ReleaseForm({
         </div>
 
         <label>
+          Oversikt
+
+          <textarea
+            name="overview"
+            value={overview}
+            onChange={(event) => {
+              markManualField("overview");
+              setOverview(
+                event.target.value,
+              );
+            }}
+          />
+        </label>
+
+        <div className="two-col">
+          <label>
+            Spilletid (minutter)
+
+            <input
+              name="runtime_minutes"
+              type="number"
+              min="1"
+              max="999"
+              value={runtimeMinutes}
+              onChange={(event) => {
+                markManualField(
+                  "runtime_minutes",
+                );
+                setRuntimeMinutes(
+                  event.target.value,
+                );
+              }}
+            />
+          </label>
+
+          <label>
+            Sjangre
+
+            <input
+              name="genres"
+              value={genres}
+              onChange={(event) => {
+                markManualField("genres");
+                setGenres(
+                  event.target.value,
+                );
+              }}
+              placeholder="Action, Thriller, Drama"
+            />
+          </label>
+        </div>
+
+        <label>
           Merknad
 
           <textarea
@@ -590,10 +1237,10 @@ export function ReleaseForm({
           />
         </label>
 
-        {!!defaults?.auto_keywords?.length && (
+        {!!autoKeywords.length && (
           <p className="muted small">
             Automatiske nøkkelord:{" "}
-            {defaults.auto_keywords.join(", ")}
+            {autoKeywords.join(", ")}
           </p>
         )}
 
