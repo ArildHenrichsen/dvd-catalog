@@ -149,5 +149,16 @@ export default function MovieNightClient() {
   }, [loading, error, result, generate, pickTwoOther, showAllMatches]);
 
   return (
-    <
-
+    <div className="movie-night container" style={{ padding: "1rem 0" }}>
+      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <h2>Hva skal vi se?</h2>
+          <p className="muted">Trykk «Generer filmkveld» for et tilfeldig tema og to filmer fra samlingen.</p>
+        </div>
+        <div>{loading ? <span className="muted">Laster…</span> : null}</div>
+      </header>
+
+      <main style={{ marginTop: "1rem" }}>{content}</main>
+    </div>
+  );
+}
