@@ -83,7 +83,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     parsed.data.metadata_manual_fields,
   ]);
 
-  let dataToUpdate = {
+  let dataToUpdate: Record<string, unknown> = {
     ...parsed.data,
     imdb_url: normalizeImdbUrl(
       parsed.data.imdb_url,
@@ -111,19 +111,24 @@ export async function PATCH(request: Request, { params }: RouteContext) {
         },
         {
           provider:
-            dataToUpdate.metadata_provider ??
+            (dataToUpdate.metadata_provider as
+              string | null | undefined) ??
             existing?.metadata_provider,
           providerId:
-            dataToUpdate.metadata_provider_id ??
+            (dataToUpdate.metadata_provider_id as
+              string | null | undefined) ??
             existing?.metadata_provider_id,
           title:
-            dataToUpdate.original_title ??
+            (dataToUpdate.original_title as
+              string | null | undefined) ??
             existing?.original_title,
           releaseYear:
-            dataToUpdate.release_year ??
+            (dataToUpdate.release_year as
+              number | null | undefined) ??
             existing?.release_year,
           imdbUrl:
-            dataToUpdate.imdb_url ??
+            (dataToUpdate.imdb_url as
+              string | null | undefined) ??
             existing?.imdb_url,
         },
         {

@@ -167,7 +167,7 @@ export async function POST(req: Request) {
     parsed.data.metadata_manual_fields,
   ]);
 
-  let dataToInsert = {
+  let dataToInsert: Record<string, unknown> = {
     ...parsed.data,
     imdb_url: normalizeImdbUrl(
       parsed.data.imdb_url,
@@ -192,14 +192,20 @@ export async function POST(req: Request) {
         dataToInsert,
         {
           provider:
-            dataToInsert.metadata_provider,
+            (dataToInsert.metadata_provider as
+              string | null | undefined) ?? null,
           providerId:
-            dataToInsert.metadata_provider_id,
+            (dataToInsert.metadata_provider_id as
+              string | null | undefined) ?? null,
           title:
-            dataToInsert.original_title,
+            (dataToInsert.original_title as
+              string | null | undefined) ?? null,
           releaseYear:
-            dataToInsert.release_year,
-          imdbUrl: dataToInsert.imdb_url,
+            (dataToInsert.release_year as
+              number | null | undefined) ?? null,
+          imdbUrl:
+            (dataToInsert.imdb_url as
+              string | null | undefined) ?? null,
         },
         {
           protectedFields:

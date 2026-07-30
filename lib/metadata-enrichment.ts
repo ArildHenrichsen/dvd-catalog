@@ -1,5 +1,8 @@
-import { parseImdbId, uniqueKeywords } from "@/lib/keyword-utils";
-import { metadataManualFieldNames } from "@/lib/validation";
+import {
+  parseImdbId,
+  uniqueKeywords,
+} from "./keyword-utils";
+import { metadataManualFieldNames } from "./validation";
 
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 
@@ -393,6 +396,10 @@ export async function enrichDvdMetadata(
     metadata_provider: fetched.provider,
     metadata_provider_id: fetched.providerId,
   };
+  const mutableMerged = merged as Record<
+    string,
+    unknown
+  >;
 
   const changedFields: string[] = [];
 
@@ -417,7 +424,14 @@ export async function enrichDvdMetadata(
       return;
     }
 
-    const currentValue = merged[field];
+    const currentValue = mutableMerged[
+      field
+    ] as
+      | string
+      | number
+      | string[]
+      | null
+      | undefined;
     const nextValue = value;
 
     const isDifferent = Array.isArray(currentValue) ||
@@ -430,7 +444,7 @@ export async function enrichDvdMetadata(
       return;
     }
 
-    merged[field] = nextValue;
+    mutableMerged[field] = nextValue;
     changedFields.push(field);
   });
 
