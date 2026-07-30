@@ -654,6 +654,138 @@ dialog::backdrop {
   line-height: 1.35;
 }
 
+.status-radio-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .45rem .9rem;
+  margin: 0;
+  padding: .55rem .72rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.status-radio-group legend {
+  padding: 0 .28rem;
+  color: var(--muted);
+  font-size: .82rem;
+  font-weight: 750;
+}
+
+.status-radio-option {
+  display: inline-flex;
+  align-items: center;
+  gap: .34rem;
+  font-size: .9rem;
+  font-weight: 650;
+}
+
+.status-radio-option input {
+  width: 16px;
+  min-height: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+.note-annotation-fieldset {
+  display: grid;
+  gap: .28rem;
+  margin: 0;
+  padding: .48rem .62rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.note-annotation-fieldset legend {
+  padding: 0 .24rem;
+  font-size: .8rem;
+  font-weight: 700;
+}
+
+.note-annotation-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .16rem .56rem;
+}
+
+.note-annotation-option {
+  display: inline-flex;
+  align-items: center;
+  gap: .24rem;
+  font-size: .79rem;
+  line-height: 1.2;
+}
+
+.note-annotation-option input {
+  flex: 0 0 auto;
+  width: 13px;
+  min-height: 13px;
+  height: 13px;
+  margin: 0;
+  padding: 0;
+}
+
+.disc-count-inline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .62rem;
+  font-size: .9rem;
+  font-weight: 750;
+  color: var(--muted);
+}
+
+.disc-count-inline select {
+  width: auto;
+  min-height: 36px;
+  padding: .32rem .62rem;
+}
+
+.metadata-collapsible {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card);
+}
+
+.metadata-collapsible > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .72rem .9rem;
+  font-size: .9rem;
+  font-weight: 750;
+  color: var(--muted);
+  user-select: none;
+}
+
+.metadata-collapsible > summary::-webkit-details-marker {
+  display: none;
+}
+
+.metadata-collapsible-chevron {
+  width: .52rem;
+  height: .52rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform .18s ease;
+  flex: 0 0 auto;
+}
+
+.metadata-collapsible[open]
+  > summary
+  .metadata-collapsible-chevron {
+  transform: rotate(225deg);
+}
+
+.metadata-collapsible-body {
+  display: grid;
+  gap: 1rem;
+  padding: 0 .9rem .9rem;
+}
+
 .wishlist-card-label,
 .wishlist-badge {
   width: fit-content;
@@ -722,6 +854,14 @@ dd {
 
   .wishlist-toggle {
     padding: .74rem;
+  }
+
+  .status-radio-group {
+    padding: .52rem .6rem;
+  }
+
+  .note-annotation-options {
+    gap: .14rem .48rem;
   }
 }
 
