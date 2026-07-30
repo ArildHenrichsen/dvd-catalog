@@ -29,18 +29,6 @@ export default async function EditPage({
           Rediger DVD
         </span>
 
-        <span
-          className={
-            release.is_wishlist
-              ? "wishlist-badge"
-              : "collection-status-badge"
-          }
-        >
-          {release.is_wishlist
-            ? "♡ På ønskelisten"
-            : "✓ I samlingen"}
-        </span>
-
         <h1>{release.original_title}</h1>
 
         {release.alternative_title && (

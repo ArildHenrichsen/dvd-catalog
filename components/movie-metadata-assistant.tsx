@@ -449,13 +449,6 @@ export function MovieMetadataAssistant({
         </p>
       )}
 
-      {!coverFile && existingReleaseId && (
-        <p className="assistant-status">
-          Det lagrede coveret brukes hvis du ikke
-          velger et nytt bilde.
-        </p>
-      )}
-
       {status && (
         <p
           className="assistant-status"
