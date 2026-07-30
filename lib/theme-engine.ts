@@ -1,14 +1,10 @@
 import { getSupabaseAdmin } from "./supabase";
 import { THEMES, MovieTheme } from "./theme";
 import type { Release } from "./types";
+import { effectiveKeywords, parseImdbId, pickBestDiversePair } from "@/lib/keyword-utils";
+import { enrichReleaseKeywords } from "@/lib/keyword-enrichment";
 
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
-
-function parseImdbId(url?: string | null) {
-  if (!url) return null;
-  const m = url.match(/tt\d{7,8}/);
-  return m ? m[0] : null;
-}
 
 function normalizeTitle(title?: string | null) {
   if (!title) return "";
@@ -28,7 +24,6 @@ function titleYearKey(title: string | null, year: number | null) {
   return `${normalizeTitle(title)}|${year ?? ""}`;
 }
 
-// Simple in-memory cache for TMDB responses
 const tmdbCache = new Map<string, { expires: number; data: any }>();
 function tmdbCacheGet(key: string) {
   const entry = tmdbCache.get(key);
@@ -62,7 +57,7 @@ async function tmdbFetch(path: string, params: Record<string, string | number | 
 
   const res = await fetch(url.toString(), {
     headers: {
-      Authorization: `Bearer ${getTmdbToken()}`,
+      Authorization: "Bearer " + getTmdbToken(),
       accept: "application/json",
     },
   });
@@ -81,19 +76,100 @@ export type ThemeMatch = {
   extras: Release[];
 };
 
+type HistoryRow = {
+  theme_id: string;
+  keywords: string[] | null;
+  release_ids: string[] | null;
+  created_at: string;
+};
+
+type ReleaseWithKeywords = Release & {
+  auto_keywords?: string[] | null;
+  manual_keywords?: string[] | null;
+  keywords_source?: string | null;
+  keywords_updated_at?: string | null;
+  times_suggested?: number | null;
+  last_suggested_at?: string | null;
+  theme_suggestion_counts?: Record<string, number> | null;
+};
+
+function scoreCandidate(
+  release: ReleaseWithKeywords,
+  themeId: string,
+  nowMs: number,
+  recentThemeCount: number,
+  recentKeywordCount: Map<string, number>,
+  recentlySuggestedIds: Set<string>,
+) {
+  const times = release.times_suggested ?? 0;
+  const daysSinceLast = release.last_suggested_at
+    ? (nowMs - new Date(release.last_suggested_at).getTime()) / (1000 * 60 * 60 * 24)
+    : Infinity;
+  let score = Math.random() * 0.25;
+  if (daysSinceLast < 14) score -= 2.6 * (1 - daysSinceLast / 14);
+  if (recentlySuggestedIds.has(release.id)) score -= 1.5;
+  score -= Math.min(2.2, times * 0.14);
+  score += 0.9 / (1 + times);
+  score -= Math.min(2, recentThemeCount * 0.55);
+
+  const movieThemeCount = release.theme_suggestion_counts?.[themeId] ?? 0;
+  score -= Math.min(1.6, movieThemeCount * 0.35);
+
+  const keywords = effectiveKeywords(release.manual_keywords, release.auto_keywords);
+  if (keywords.length) {
+    for (const keyword of keywords) {
+      const count = recentKeywordCount.get(keyword) ?? 0;
+      if (count > 0) score -= Math.min(0.9, count * 0.17);
+      else score += 0.06;
+    }
+  } else {
+    score += 0.05;
+  }
+  return { score, keywords };
+}
+
+async function persistSuggestion(
+  supabase: any,
+  theme: MovieTheme,
+  chosen: ReleaseWithKeywords[],
+  keywordSet: string[],
+) {
+  try {
+    const nowIso = new Date().toISOString();
+    await Promise.all(
+      chosen.map(release => {
+        const counts = { ...(release.theme_suggestion_counts ?? {}) };
+        counts[theme.id] = (counts[theme.id] ?? 0) + 1;
+        return supabase
+          .from("releases")
+          .update({
+            times_suggested: (release.times_suggested ?? 0) + 1,
+            last_suggested_at: nowIso,
+            theme_suggestion_counts: counts,
+          })
+          .eq("id", release.id);
+      }),
+    );
+
+    await supabase.from("movie_night_history").insert({
+      theme_id: theme.id,
+      theme_title: theme.title,
+      release_ids: chosen.map(r => r.id),
+      keywords: keywordSet,
+      created_at: nowIso,
+    });
+  } catch (error) {
+    console.error("Kunne ikke lagre forslagshistorikk:", error);
+  }
+}
+
 export async function generateMovieNight(options?: { maxThemesToTest?: number }) {
   const maxThemes = options?.maxThemesToTest ?? 12;
   const supabase = getSupabaseAdmin();
 
-  // Fetch releases in collection (not wishlist)
-  let allReleases: Release[] = [];
+  let allReleases: ReleaseWithKeywords[] = [];
   try {
-    const { data: releases, error } = await supabase
-      .from("releases")
-      .select(
-        "id,original_title,alternative_title,release_year,imdb_score,imdb_url,cover_url,thumbnail_url,cover_path,thumbnail_path,is_wishlist,created_at,updated_at",
-      )
-      .eq("is_wishlist", false);
+    const { data: releases, error } = await supabase.from("releases").select("*").eq("is_wishlist", false);
 
     if (error) {
       console.error("Supabase-feil ved henting av releases:", error);
@@ -104,33 +180,26 @@ export async function generateMovieNight(options?: { maxThemesToTest?: number })
       };
     }
 
-    // Normalize so we always have cover_url/thumbnail_url fields (prefer explicit URL, fallback to stored path)
     allReleases = ((releases ?? []) as any[]).map(r => ({
       ...r,
       cover_url: r.cover_url ?? r.cover_path ?? null,
       thumbnail_url: r.thumbnail_url ?? r.thumbnail_path ?? null,
-    })) as Release[];
+    })) as ReleaseWithKeywords[];
 
-    // Ensure storage paths are converted to signed Supabase URLs when needed (prevents client 404s from relative paths)
     allReleases = await Promise.all(
       allReleases.map(async r => {
         const isFullUrl = (u?: string | null) => !!u && /^https?:\/\//i.test(u ?? "");
-
-        // If either URL is already a full URL, keep as-is
         if (isFullUrl(r.thumbnail_url) || isFullUrl(r.cover_url)) return r;
-
         const imagePath = r.thumbnail_path || r.cover_path;
         if (!imagePath) return r;
-
         try {
           const signed = await supabase.storage.from("covers").createSignedUrl(imagePath, 3600);
           const signedUrl = signed?.data?.signedUrl ?? null;
-
           return {
             ...r,
             thumbnail_url: isFullUrl(r.thumbnail_url) ? r.thumbnail_url : signedUrl ?? r.thumbnail_url,
             cover_url: isFullUrl(r.cover_url) ? r.cover_url : signedUrl ?? r.cover_url,
-          } as Release;
+          } as ReleaseWithKeywords;
         } catch (e) {
           console.error("Kunne ikke opprette signed URL for cover:", e);
           return r;
@@ -146,9 +215,35 @@ export async function generateMovieNight(options?: { maxThemesToTest?: number })
     };
   }
 
-  // Build lookup maps
-  const imdbMap = new Map<string, Release[]>();
-  const titleYearMap = new Map<string, Release[]>();
+  const releasesNeedingKeywords = allReleases
+    .filter(r => parseImdbId(r.imdb_url) && (!r.auto_keywords || r.auto_keywords.length === 0))
+    .slice(0, 3);
+  if (releasesNeedingKeywords.length) {
+    await Promise.all(
+      releasesNeedingKeywords.map(async release => {
+        try {
+          await enrichReleaseKeywords(supabase, release, { staleDays: 30 });
+        } catch (error) {
+          console.error("Keyword enrichment feilet:", error);
+        }
+      }),
+    );
+    for (const release of releasesNeedingKeywords) {
+      const { data } = await supabase
+        .from("releases")
+        .select("auto_keywords,keywords_source,keywords_updated_at")
+        .eq("id", release.id)
+        .maybeSingle();
+      if (data) {
+        release.auto_keywords = data.auto_keywords ?? [];
+        release.keywords_source = data.keywords_source ?? null;
+        release.keywords_updated_at = data.keywords_updated_at ?? null;
+      }
+    }
+  }
+
+  const imdbMap = new Map<string, ReleaseWithKeywords[]>();
+  const titleYearMap = new Map<string, ReleaseWithKeywords[]>();
 
   for (const r of allReleases) {
     const imdbId = parseImdbId(r.imdb_url);
@@ -163,67 +258,79 @@ export async function generateMovieNight(options?: { maxThemesToTest?: number })
     titleYearMap.set(key, arr2);
   }
 
-  // Shuffle themes
-  const themes = [...THEMES].sort(() => Math.random() - 0.5);
+  const recentKeywordCount = new Map<string, number>();
+  const recentThemeCount = new Map<string, number>();
+  const recentlySuggestedIds = new Set<string>();
+  try {
+    const since = new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: historyRows } = await supabase
+      .from("movie_night_history")
+      .select("theme_id,keywords,release_ids,created_at")
+      .gte("created_at", since)
+      .order("created_at", { ascending: false })
+      .limit(200);
+    for (const row of (historyRows ?? []) as HistoryRow[]) {
+      recentThemeCount.set(row.theme_id, (recentThemeCount.get(row.theme_id) ?? 0) + 1);
+      for (const keyword of row.keywords ?? []) {
+        recentKeywordCount.set(keyword, (recentKeywordCount.get(keyword) ?? 0) + 1);
+      }
+      for (const releaseId of row.release_ids ?? []) recentlySuggestedIds.add(releaseId);
+    }
+  } catch (error) {
+    console.error("Kunne ikke lese movie_night_history, fortsetter uten historikk:", error);
+  }
 
+  const themes = [...THEMES].sort(() => Math.random() - 0.5);
   let tested = 0;
+
   for (const theme of themes) {
     if (tested >= maxThemes) break;
     tested++;
 
     try {
-      let matched: Array<{ release: Release; reason: string }> = [];
-      const extraSet = new Map<string, Release>();
+      let matched: Array<{ release: ReleaseWithKeywords; reason: string }> = [];
+      const extraSet = new Map<string, ReleaseWithKeywords>();
 
       if (theme.source === "collection" && theme.collectionQuery) {
-        // Filter by collectionQuery
         matched = allReleases
           .filter(r => {
             const y = r.release_year;
             if (theme.collectionQuery?.yearFrom && (y ?? 0) < theme.collectionQuery.yearFrom) return false;
             if (theme.collectionQuery?.yearTo && (y ?? 0) > theme.collectionQuery.yearTo) return false;
-            if (
-              theme.collectionQuery?.minimumImdbScore !== undefined &&
-              (r.imdb_score ?? 0) < (theme.collectionQuery.minimumImdbScore ?? -Infinity)
-            )
+            if (theme.collectionQuery?.minimumImdbScore !== undefined && (r.imdb_score ?? 0) < (theme.collectionQuery.minimumImdbScore ?? -Infinity))
               return false;
-            if (
-              theme.collectionQuery?.maximumImdbScore !== undefined &&
-              (r.imdb_score ?? 0) > (theme.collectionQuery.maximumImdbScore ?? Infinity)
-            )
+            if (theme.collectionQuery?.maximumImdbScore !== undefined && (r.imdb_score ?? 0) > (theme.collectionQuery.maximumImdbScore ?? Infinity))
               return false;
             return true;
           })
           .map(r => ({ release: r, reason: `Matcher samlingsregel (${theme.id})` }));
 
-        // requireSameDecade handling: group by decade
         if (theme.collectionQuery?.requireSameDecade) {
-          // find decades with at least 2 films
-          const byDecade = new Map<number, Release[]>();
+          const byDecade = new Map<number, ReleaseWithKeywords[]>();
           for (const r of matched.map(m => m.release)) {
             const decade = Math.floor(((r.release_year ?? 0) || 0) / 10) * 10;
             const arr = byDecade.get(decade) ?? [];
             arr.push(r);
             byDecade.set(decade, arr);
           }
-          // pick any decade with >=2
-          let found: Release[] | null = null;
+          let found: ReleaseWithKeywords[] | null = null;
           for (const arr of byDecade.values()) {
             if (arr.length >= 2) {
               found = arr;
               break;
             }
           }
-          if (!found) {
-            matched = [];
-          } else {
-            matched = found.slice(0, 10).map(r => ({ release: r, reason: `Samme tiår (${Math.floor(((r.release_year ?? 0) || 0) / 10) * 10}s)` }));
+          if (!found) matched = [];
+          else {
+            matched = found.slice(0, 10).map(r => ({
+              release: r,
+              reason: `Samme tiår (${Math.floor(((r.release_year ?? 0) || 0) / 10) * 10}s)`,
+            }));
           }
         }
       } else if (theme.source === "curated" && theme.curatedImdbIds && theme.curatedImdbIds.length) {
-        // intersect curated IMDB ids with collection
         for (const imdb of theme.curatedImdbIds) {
-          const found = imdbMap.get(imdb);
+          const found = imdbMap.get(imdb.toLowerCase());
           if (found) {
             for (const r of found) {
               matched.push({ release: r, reason: `Kurert liste (IMDb ${imdb})` });
@@ -232,113 +339,111 @@ export async function generateMovieNight(options?: { maxThemesToTest?: number })
           }
         }
       } else if (theme.source === "tmdb" && theme.tmdbQuery) {
-        // TMDB-based: perform searches depending on tmdbQuery
         let movies: any[] = [];
-
-        // If person is set, search person -> get movie credits
         if (theme.tmdbQuery.person) {
           try {
-            const personSearch = await tmdbFetch('/search/person', { query: theme.tmdbQuery.person, language: 'nb-NO', page: 1 });
+            const personSearch = await tmdbFetch("/search/person", { query: theme.tmdbQuery.person, language: "nb-NO", page: 1 });
             const person = (personSearch.results ?? [])[0];
-            if (person && person.id) {
-              const credits = await tmdbFetch(`/person/${person.id}/movie_credits`, { language: 'nb-NO' });
+            if (person?.id) {
+              const credits = await tmdbFetch(`/person/${person.id}/movie_credits`, { language: "nb-NO" });
               movies = (credits.cast ?? []).concat(credits.crew ?? []);
             }
           } catch (e) {
-            console.error('TMDB person search failed', e);
+            console.error("TMDB person search failed", e);
           }
         }
 
-        // If no movies yet, fallback to search/movie with query or keywords
         if (!movies.length) {
           const keywordsJoined = (theme.tmdbQuery.keywords ?? []).join(" ");
           const query = (theme.tmdbQuery.query ?? keywordsJoined) || "";
           try {
-            const payload = await tmdbFetch('/search/movie', { query: query || 'a', language: 'nb-NO', page: 1 });
+            const payload = await tmdbFetch("/search/movie", { query: query || "a", language: "nb-NO", page: 1 });
             movies = payload.results ?? [];
           } catch (e) {
-            console.error('TMDB movie search failed', e);
+            console.error("TMDB movie search failed", e);
             movies = [];
           }
         }
 
-        // limit movies
         const limit = theme.tmdbQuery.limit ?? 12;
         movies = movies.slice(0, limit);
 
-        // Try matching by normalized title+year first
         for (const m of movies) {
           const y = m.release_date ? Number(m.release_date.slice(0, 4)) : null;
           const key = titleYearKey(m.original_title ?? m.title, y);
           const found = titleYearMap.get(key);
-          if (found) {
-            for (const r of found) {
-              if (!extraSet.has(r.id)) {
-                matched.push({ release: r, reason: `TMDB: matcher tittel/år (${m.original_title ?? m.title}${y ? `, ${y}` : ''})` });
-                extraSet.set(r.id, r);
-              }
-            }
+          if (!found) continue;
+          for (const r of found) {
+            if (extraSet.has(r.id)) continue;
+            matched.push({ release: r, reason: `TMDB: matcher tittel/år (${m.original_title ?? m.title}${y ? `, ${y}` : ""})` });
+            extraSet.set(r.id, r);
           }
         }
 
-        // If still not enough matches, attempt to match by IMDb ID via TMDB external ids (costly, so only if needed)
         if (matched.length < 2) {
           for (const m of movies) {
             try {
-              const ext = await tmdbFetch(`/movie/${m.id}/external_ids`, { language: 'nb-NO' });
-              const imdb_id = ext.imdb_id as string | undefined | null;
-              if (imdb_id) {
-                const found = imdbMap.get(imdb_id);
-                if (found) {
-                  for (const r of found) {
-                    if (!extraSet.has(r.id)) {
-                      matched.push({ release: r, reason: `TMDB: IMDb-match (${imdb_id})` });
-                      extraSet.set(r.id, r);
-                    }
-                  }
-                }
+              const ext = await tmdbFetch(`/movie/${m.id}/external_ids`, { language: "nb-NO" });
+              const imdbId = parseImdbId(ext.imdb_id);
+              if (!imdbId) continue;
+              const found = imdbMap.get(imdbId);
+              if (!found) continue;
+              for (const r of found) {
+                if (extraSet.has(r.id)) continue;
+                matched.push({ release: r, reason: `TMDB: IMDb-match (${imdbId})` });
+                extraSet.set(r.id, r);
               }
             } catch (e) {
-              console.error('TMDB external ids fetch failed', e);
+              console.error("TMDB external ids fetch failed", e);
             }
             if (matched.length >= 2) break;
           }
         }
       }
 
-      // Remove duplicates and ensure at least 2
-      const unique = new Map<string, { release: Release; reason: string }>();
+      const unique = new Map<string, { release: ReleaseWithKeywords; reason: string }>();
       for (const m of matched) {
         if (!unique.has(m.release.id)) unique.set(m.release.id, m);
       }
 
       const results = Array.from(unique.values());
-
       if (results.length >= 2) {
-        // Prepare extras as additional matched releases beyond the two chosen
-        const releasesOnly = results.map(r => r.release);
-        // Choose two random distinct
-        const shuffled = releasesOnly.sort(() => Math.random() - 0.5);
-        const chosen = shuffled.slice(0, 2);
-        const chosenWithReason = chosen.map(r => {
-          const reason = results.find(x => x.release.id === r.id)?.reason ?? "Matcher temaet";
-          return { release: r, reason };
+        const nowMs = Date.now();
+        const themePenalty = recentThemeCount.get(theme.id) ?? 0;
+        const candidates = results.map(item => {
+          const scored = scoreCandidate(item.release, theme.id, nowMs, themePenalty, recentKeywordCount, recentlySuggestedIds);
+          return {
+            ...item,
+            score: scored.score,
+            keywords: scored.keywords,
+          };
         });
+        candidates.sort((a, b) => b.score - a.score);
+        const pool = candidates.slice(0, Math.max(2, Math.min(16, candidates.length)));
+        const pair = pickBestDiversePair(pool.map(c => ({ id: c.release.id, score: c.score, keywords: c.keywords })));
 
-        const extras = shuffled.slice(2);
+        const pickedIds = pair ? new Set([pair[0].id, pair[1].id]) : new Set(pool.slice(0, 2).map(p => p.release.id));
+        const chosen = candidates.filter(c => pickedIds.has(c.release.id)).slice(0, 2);
+        if (chosen.length < 2) continue;
+        const extras = candidates.filter(c => !pickedIds.has(c.release.id)).map(c => c.release);
+        const keywordSet = Array.from(new Set(chosen.flatMap(c => c.keywords)));
+        await persistSuggestion(
+          supabase,
+          theme,
+          chosen.map(c => c.release),
+          keywordSet,
+        );
 
         return {
           success: true as const,
           theme,
-          films: chosenWithReason,
+          films: chosen.map(c => ({ release: c.release, reason: c.reason })),
           totalMatches: results.length,
           extras,
         };
       }
-
     } catch (e) {
-      console.error('Feil ved testing av tema', theme.id, e);
-      // try next theme
+      console.error("Feil ved testing av tema", theme.id, e);
     }
   }
 

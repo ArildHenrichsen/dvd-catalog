@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { Release } from "@/lib/types";
 import { ImdbScoreButton } from "@/components/imdb-score-button";
 import { MovieMetadataAssistant } from "@/components/movie-metadata-assistant";
+import { splitKeywordInput } from "@/lib/keyword-utils";
 
 type DuplicateMatch = {
   id: string;
@@ -19,7 +20,7 @@ type DuplicateMatch = {
 
 type ReleasePayload = Record<
   string,
-  FormDataEntryValue | boolean | null
+  FormDataEntryValue | boolean | string[] | null
 >;
 
 export function ReleaseForm({
@@ -93,6 +94,10 @@ export function ReleaseForm({
     defaults?.is_wishlist ?? false,
   );
 
+  const [manualKeywords, setManualKeywords] = useState(
+    (defaults?.manual_keywords ?? []).join(", "),
+  );
+
   async function upload(file: File) {
     setBusy(true);
     setError("");
@@ -161,6 +166,7 @@ export function ReleaseForm({
     payload.region = region;
     payload.edition = edition;
     payload.is_wishlist = isWishlist;
+    payload.manual_keywords = splitKeywordInput(manualKeywords);
 
     return payload;
   }
@@ -571,6 +577,25 @@ export function ReleaseForm({
             }
           />
         </label>
+
+        <label>
+          Manuelle nøkkelord (kommaseparert)
+          <input
+            name="manual_keywords"
+            value={manualKeywords}
+            onChange={(event) =>
+              setManualKeywords(event.target.value)
+            }
+            placeholder="f.eks. genre:action, mood:dark, noir"
+          />
+        </label>
+
+        {!!defaults?.auto_keywords?.length && (
+          <p className="muted small">
+            Automatiske nøkkelord:{" "}
+            {defaults.auto_keywords.join(", ")}
+          </p>
+        )}
 
         <p className="muted">
           Status:{" "}

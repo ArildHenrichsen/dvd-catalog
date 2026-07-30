@@ -12,6 +12,24 @@ const checkboxBoolean = z.preprocess(
   z.boolean(),
 );
 
+function normalizeKeywordInput(value: unknown): string[] | null {
+  if (value === null || value === undefined || value === "") return null;
+  const source = Array.isArray(value)
+    ? value
+    : typeof value === "string"
+      ? value.split(",")
+      : [];
+  const seen = new Set<string>();
+  const normalized: string[] = [];
+  for (const item of source) {
+    const token = String(item).trim().toLowerCase();
+    if (!token || seen.has(token)) continue;
+    seen.add(token);
+    normalized.push(token);
+  }
+  return normalized.length ? normalized : null;
+}
+
 export const releaseSchema = z.object({
   is_wishlist: checkboxBoolean.default(false),
   original_title: z.string().trim().min(1, "Originaltittel er obligatorisk").max(240),
@@ -24,6 +42,10 @@ export const releaseSchema = z.object({
   notes: z.string().trim().max(4000).optional().nullable().transform(v => v || null),
   cover_path: optionalText,
   thumbnail_path: optionalText,
+  manual_keywords: z.preprocess(
+    value => normalizeKeywordInput(value),
+    z.array(z.string().trim().min(1).max(64)).nullable().optional(),
+  ),
 });
 
 export type ReleaseFormValues = z.input<typeof releaseSchema>;

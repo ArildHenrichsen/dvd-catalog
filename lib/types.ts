@@ -13,6 +13,13 @@ export type Release = {
   is_wishlist: boolean;
   cover_url?: string | null;
   thumbnail_url?: string | null;
+  auto_keywords?: string[] | null;
+  manual_keywords?: string[] | null;
+  keywords_source?: string | null;
+  keywords_updated_at?: string | null;
+  times_suggested?: number | null;
+  last_suggested_at?: string | null;
+  theme_suggestion_counts?: Record<string, number> | null;
   created_at: string;
   updated_at: string;
 };
@@ -28,5 +35,6 @@ export type ReleaseInput = {
   notes?: string | null;
   cover_path?: string | null;
   thumbnail_path?: string | null;
+  manual_keywords?: string[] | null;
   is_wishlist?: boolean;
 };
