@@ -91,7 +91,7 @@ export async function generateMovieNight(options?: { maxThemesToTest?: number })
     const { data: releases, error } = await supabase
       .from("releases")
       .select(
-        "id,original_title,alternative_title,release_year,imdb_score,imdb_url,cover_url,thumbnail_url,is_wishlist,created_at,updated_at",
+        "id,original_title,alternative_title,release_year,imdb_score,imdb_url,cover_url,thumbnail_url,cover_path,thumbnail_path,is_wishlist,created_at,updated_at",
       )
       .eq("is_wishlist", false);
 
@@ -104,7 +104,12 @@ export async function generateMovieNight(options?: { maxThemesToTest?: number })
       };
     }
 
-    allReleases = (releases ?? []) as Release[];
+    // Normalize so we always have cover_url/thumbnail_url fields (prefer explicit URL, fallback to stored path)
+    allReleases = ((releases ?? []) as any[]).map(r => ({
+      ...r,
+      cover_url: r.cover_url ?? r.cover_path ?? null,
+      thumbnail_url: r.thumbnail_url ?? r.thumbnail_path ?? null,
+    })) as Release[];
   } catch (ex) {
     console.error("Exception ved henting av releases fra Supabase:", ex);
     return {
