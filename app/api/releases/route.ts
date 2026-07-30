@@ -1,4 +1,8 @@
 import { NextResponse } from "next/server";
+import {
+  enrichDvdMetadata,
+  type MetadataManualField,
+} from "@/lib/metadata-enrichment";
 import { releaseSchema } from "@/lib/validation";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { hasWriteAccess } from "@/lib/write-auth";
@@ -25,6 +29,26 @@ function normalizeImdbUrl(
   }
 
   return `https://www.imdb.com/title/${match[1].toLowerCase()}/`;
+}
+
+function mergeManualFields(
+  values: Array<string[] | null | undefined>,
+) {
+  const seen = new Set<string>();
+  const merged: string[] = [];
+
+  for (const list of values) {
+    for (const field of list ?? []) {
+      if (!field || seen.has(field)) {
+        continue;
+      }
+
+      seen.add(field);
+      merged.push(field);
+    }
+  }
+
+  return merged;
 }
 
 export async function POST(req: Request) {
@@ -139,14 +163,69 @@ export async function POST(req: Request) {
     }
   }
 
-  const dataToInsert = {
+  const metadataManualFields = mergeManualFields([
+    parsed.data.metadata_manual_fields,
+  ]);
+
+  let dataToInsert = {
     ...parsed.data,
     imdb_url: normalizeImdbUrl(
       parsed.data.imdb_url,
     ),
+    genres: parsed.data.genres ?? [],
+    manual_keywords:
+      parsed.data.manual_keywords ?? [],
+    metadata_manual_fields:
+      metadataManualFields,
     is_wishlist:
       parsed.data.is_wishlist ?? false,
   };
+
+  const shouldEnrich = Boolean(
+    dataToInsert.metadata_provider_id ||
+      dataToInsert.imdb_url,
+  );
+
+  if (shouldEnrich) {
+    try {
+      const enriched = await enrichDvdMetadata(
+        dataToInsert,
+        {
+          provider:
+            dataToInsert.metadata_provider,
+          providerId:
+            dataToInsert.metadata_provider_id,
+          title:
+            dataToInsert.original_title,
+          releaseYear:
+            dataToInsert.release_year,
+          imdbUrl: dataToInsert.imdb_url,
+        },
+        {
+          protectedFields:
+            metadataManualFields as MetadataManualField[],
+        },
+      );
+
+      dataToInsert = {
+        ...dataToInsert,
+        ...enriched.metadata,
+        manual_keywords:
+          dataToInsert.manual_keywords ?? [],
+        genres:
+          enriched.metadata.genres ??
+          dataToInsert.genres ??
+          [],
+        metadata_manual_fields:
+          metadataManualFields,
+      };
+    } catch (error) {
+      console.error(
+        "Create metadata enrichment failed:",
+        error,
+      );
+    }
+  }
 
   const { data, error } = await supabase
     .from("releases")

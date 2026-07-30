@@ -39,11 +39,17 @@ export default async function ReleasePage({ params }: { params: Promise<{ id: st
           <dt>IMDb-link</dt><dd>{r.imdb_url ? <a href={r.imdb_url} target="_blank" rel="noreferrer">Åpne på IMDb ↗</a> : "–"}</dd>
           <dt>Region</dt><dd>{r.region ?? "–"}</dd>
           <dt>Utgave</dt><dd>{r.edition ?? "–"}</dd>
+          <dt>Spilletid</dt><dd>{r.runtime_minutes ? `${r.runtime_minutes} min` : "–"}</dd>
+          <dt>Sjangre</dt><dd>{r.genres?.length ? r.genres.join(", ") : "–"}</dd>
+          <dt>Oversikt</dt><dd style={{ whiteSpace: "pre-wrap" }}>{r.overview ?? "–"}</dd>
           <dt>Merknad</dt><dd style={{ whiteSpace: "pre-wrap" }}>{r.notes ?? "–"}</dd>
           <dt>Nøkkelord (effektiv)</dt><dd>{keywords.length ? keywords.join(", ") : "–"}</dd>
           <dt>Manuelle nøkkelord</dt><dd>{r.manual_keywords?.length ? r.manual_keywords.join(", ") : "–"}</dd>
           <dt>Auto-kilde</dt><dd>{r.keywords_source ?? "–"}</dd>
           <dt>Sist beriket</dt><dd>{r.keywords_updated_at ? new Date(r.keywords_updated_at).toLocaleString("nb-NO") : "–"}</dd>
+          <dt>Metadata-kilde</dt><dd>{r.metadata_provider ?? "–"}</dd>
+          <dt>Kilde-ID</dt><dd>{r.metadata_provider_id ?? "–"}</dd>
+          <dt>Metadata sist hentet</dt><dd>{r.metadata_last_enriched_at ? new Date(r.metadata_last_enriched_at).toLocaleString("nb-NO") : "–"}</dd>
           <dt>Antall forslag</dt><dd>{r.times_suggested ?? 0}</dd>
           <dt>Sist foreslått</dt><dd>{r.last_suggested_at ? new Date(r.last_suggested_at).toLocaleString("nb-NO") : "–"}</dd>
           <dt>Registrert</dt><dd>{new Date(r.created_at).toLocaleString("nb-NO")}</dd>

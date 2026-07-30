@@ -10,7 +10,11 @@ type Metadata = Pick<
   | "release_year"
   | "imdb_url"
   | "imdb_score"
->;
+  | "overview"
+> & {
+  metadata_provider?: string | null;
+  metadata_provider_id?: string | null;
+};
 
 type ImportedCover = {
   path: string;
@@ -334,6 +338,11 @@ export function MovieMetadataAssistant({
           fetchedScore ??
           movie.imdb_score ??
           null,
+        overview: movie.overview,
+        metadata_provider: "tmdb",
+        metadata_provider_id: String(
+          movie.tmdb_id,
+        ),
       };
 
       onApply(metadata, importedCover);

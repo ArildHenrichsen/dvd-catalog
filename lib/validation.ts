@@ -12,6 +12,20 @@ const checkboxBoolean = z.preprocess(
   z.boolean(),
 );
 
+export const metadataManualFieldNames = [
+  "original_title",
+  "alternative_title",
+  "release_year",
+  "imdb_url",
+  "overview",
+  "runtime_minutes",
+  "genres",
+] as const;
+
+const metadataManualFieldSchema = z.enum(
+  metadataManualFieldNames,
+);
+
 function normalizeKeywordInput(value: unknown): string[] | null {
   if (value === null || value === undefined || value === "") return null;
   const source = Array.isArray(value)
@@ -30,6 +44,37 @@ function normalizeKeywordInput(value: unknown): string[] | null {
   return normalized.length ? normalized : null;
 }
 
+function normalizeTextList(
+  value: unknown,
+): string[] | null {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  const source = Array.isArray(value)
+    ? value
+    : typeof value === "string"
+      ? value.split(",")
+      : [];
+
+  const seen = new Set<string>();
+  const normalized: string[] = [];
+
+  for (const item of source) {
+    const token = String(item).trim();
+    const key = token.toLocaleLowerCase("nb-NO");
+
+    if (!token || seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    normalized.push(token);
+  }
+
+  return normalized.length ? normalized : null;
+}
+
 export const releaseSchema = z.object({
   is_wishlist: checkboxBoolean.default(false),
   original_title: z.string().trim().min(1, "Originaltittel er obligatorisk").max(240),
@@ -42,9 +87,21 @@ export const releaseSchema = z.object({
   notes: z.string().trim().max(4000).optional().nullable().transform(v => v || null),
   cover_path: optionalText,
   thumbnail_path: optionalText,
+  overview: z.string().trim().max(6000).optional().nullable().transform(v => v || null),
+  runtime_minutes: optionalNumber(z.coerce.number().int().min(1).max(999)),
+  genres: z.preprocess(
+    value => normalizeTextList(value),
+    z.array(z.string().trim().min(1).max(80)).nullable().optional(),
+  ),
   manual_keywords: z.preprocess(
     value => normalizeKeywordInput(value),
     z.array(z.string().trim().min(1).max(64)).nullable().optional(),
+  ),
+  metadata_provider: z.string().trim().max(64).optional().nullable().transform(v => v || null),
+  metadata_provider_id: z.string().trim().max(64).optional().nullable().transform(v => v || null),
+  metadata_manual_fields: z.preprocess(
+    value => normalizeTextList(value),
+    z.array(metadataManualFieldSchema).nullable().optional(),
   ),
 });
 
