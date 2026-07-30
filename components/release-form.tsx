@@ -6,6 +6,12 @@ import type { Release } from "@/lib/types";
 import { ImdbScoreButton } from "@/components/imdb-score-button";
 import { MovieMetadataAssistant } from "@/components/movie-metadata-assistant";
 import { splitKeywordInput } from "@/lib/keyword-utils";
+import {
+  formatReleaseNotes,
+  parseReleaseNotes,
+  type StructuredNoteLabel,
+  structuredNoteLabels,
+} from "@/lib/release-notes";
 
 type MetadataManualField =
   | "original_title"
@@ -45,6 +51,9 @@ export function ReleaseForm({
   initial?: Release;
 }) {
   const defaults = release || initial;
+  const parsedNotes = parseReleaseNotes(
+    defaults?.notes,
+  );
   const router = useRouter();
 
   const [error, setError] = useState("");
@@ -127,6 +136,19 @@ export function ReleaseForm({
     (defaults?.genres ?? []).join(", "),
   );
 
+  const [discCount, setDiscCount] = useState(
+    parsedNotes.discCount,
+  );
+
+  const [selectedNoteLabels, setSelectedNoteLabels] =
+    useState<StructuredNoteLabel[]>(
+      parsedNotes.selectedLabels,
+    );
+
+  const [customNotes, setCustomNotes] = useState(
+    parsedNotes.customText,
+  );
+
   const [autoKeywords, setAutoKeywords] = useState(
     defaults?.auto_keywords ?? [],
   );
@@ -181,6 +203,16 @@ export function ReleaseForm({
       .split(",")
       .map((item) => item.trim())
       .filter(Boolean);
+  }
+
+  function toggleStructuredNoteLabel(
+    label: StructuredNoteLabel,
+  ) {
+    setSelectedNoteLabels((current) =>
+      current.includes(label)
+        ? current.filter((item) => item !== label)
+        : [...current, label],
+    );
   }
 
   function buildMetadataSnapshot(
@@ -556,6 +588,11 @@ export function ReleaseForm({
     payload.runtime_minutes =
       runtimeMinutes.trim() || null;
     payload.genres = splitListInput(genres);
+    payload.notes = formatReleaseNotes({
+      discCount,
+      selectedLabels: selectedNoteLabels,
+      customText: customNotes,
+    });
     payload.manual_keywords = splitKeywordInput(manualKeywords);
     payload.metadata_provider =
       metadataProvider.trim() || null;
@@ -683,6 +720,12 @@ export function ReleaseForm({
     setDuplicateMatches([]);
     setPendingPayload(null);
   }
+
+  const notePreview = formatReleaseNotes({
+    discCount,
+    selectedLabels: selectedNoteLabels,
+    customText: customNotes,
+  });
 
   return (
     <>
@@ -1214,16 +1257,76 @@ export function ReleaseForm({
           </label>
         </div>
 
+        <div className="two-col">
+          <label>
+            Antall discer
+
+            <select
+              value={String(discCount)}
+              onChange={(event) =>
+                setDiscCount(
+                  Number(event.target.value),
+                )
+              }
+            >
+              {[1, 2, 3, 4, 5, 6].map((count) => (
+                <option
+                  key={count}
+                  value={count}
+                >
+                  {count}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <fieldset className="note-annotation-fieldset">
+            <legend>Merknadsvalg</legend>
+
+            <div className="note-annotation-options">
+              {structuredNoteLabels.map((label) => (
+                <label
+                  key={label}
+                  className="note-annotation-option"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedNoteLabels.includes(
+                      label,
+                    )}
+                    onChange={() =>
+                      toggleStructuredNoteLabel(
+                        label,
+                      )
+                    }
+                  />
+
+                  <span>{label}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        </div>
+
         <label>
           Merknad
 
           <textarea
             name="notes"
-            defaultValue={
-              defaults?.notes || ""
+            value={customNotes}
+            onChange={(event) =>
+              setCustomNotes(event.target.value)
             }
+            placeholder="Egne tillegg, f.eks. Svensk cover"
           />
         </label>
+
+        <p className="muted small">
+          Valgene over lagres i samme merknadsfelt.
+          {notePreview
+            ? ` Resultat: ${notePreview}`
+            : " Resultat: –"}
+        </p>
 
         <label>
           Manuelle nøkkelord (kommaseparert)
