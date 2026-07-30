@@ -17,7 +17,7 @@ function normalizeTitle(title?: string | null) {
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
     .replace(/[\u2013\u2014–—]/g, "-")
-    .replace(/["'`.,:;!()\[\]{}]/g, "")
+    .replace(/[\"'`.,:;!()\[\]{}]/g, "")
     .replace(/\b(the|a|an|en|et|den|det)\b\s*/g, "")
     .replace(/[^a-z0-9\-\s]/g, "")
     .replace(/\s+/g, " ")
@@ -110,6 +110,33 @@ export async function generateMovieNight(options?: { maxThemesToTest?: number })
       cover_url: r.cover_url ?? r.cover_path ?? null,
       thumbnail_url: r.thumbnail_url ?? r.thumbnail_path ?? null,
     })) as Release[];
+
+    // Ensure storage paths are converted to signed Supabase URLs when needed (prevents client 404s from relative paths)
+    allReleases = await Promise.all(
+      allReleases.map(async r => {
+        const isFullUrl = (u?: string | null) => !!u && /^https?:\/\//i.test(u ?? "");
+
+        // If either URL is already a full URL, keep as-is
+        if (isFullUrl(r.thumbnail_url) || isFullUrl(r.cover_url)) return r;
+
+        const imagePath = r.thumbnail_path || r.cover_path;
+        if (!imagePath) return r;
+
+        try {
+          const signed = await supabase.storage.from("covers").createSignedUrl(imagePath, 3600);
+          const signedUrl = signed?.data?.signedUrl ?? null;
+
+          return {
+            ...r,
+            thumbnail_url: isFullUrl(r.thumbnail_url) ? r.thumbnail_url : signedUrl ?? r.thumbnail_url,
+            cover_url: isFullUrl(r.cover_url) ? r.cover_url : signedUrl ?? r.cover_url,
+          } as Release;
+        } catch (e) {
+          console.error("Kunne ikke opprette signed URL for cover:", e);
+          return r;
+        }
+      }),
+    );
   } catch (ex) {
     console.error("Exception ved henting av releases fra Supabase:", ex);
     return {
