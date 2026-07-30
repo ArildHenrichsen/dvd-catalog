@@ -30,7 +30,42 @@ npm test
 npm run build
 ```
 
-## 5. Deploy til Vercel
+## 5. Automatisk nøkkelord-berikelse
+
+Appen støtter automatisk berikelse av filmmetadata basert på IMDb-ID (`imdb_url`) via TMDB.
+
+- Konfigurasjon:
+  - `TMDB_READ_ACCESS_TOKEN` må være satt i miljøvariabler.
+- Kjør berikelse for hele samlingen:
+  ```bash
+  npm run enrich-keywords
+  ```
+- Ekstra flagg:
+  - `--force` tvinger oppdatering av alle filmer
+  - `--stale-days=30` styrer hvor gammel data kan være før refresh
+
+Beriket metadata lagres lokalt i databasen (`auto_keywords`) og i en lokal cache-tabell (`movie_metadata_cache`) slik at anbefalinger ikke avhenger av live API-kall.
+
+## 6. Manuelle nøkkelord (override)
+
+På opprett/rediger-siden for en film finnes feltet **Manuelle nøkkelord (kommaseparert)**.
+
+- Manuelle nøkkelord lagres i `manual_keywords`.
+- Effektive nøkkelord bygges av manuelle + automatiske nøkkelord, med manuelle først/prioritert.
+- Hvis automatisk berikelse mangler eller API er utilgjengelig, fortsetter appen med manuelle nøkkelord og eksisterende logikk.
+
+## 7. Diversitet i filmkveld-forslag
+
+Forslagsmotoren roterer mer aktivt ved å:
+
+- straffe nylig foreslåtte filmer (`last_suggested_at`, `times_suggested`)
+- straffe temaer og nøkkelord som er brukt mye nylig (`movie_night_history`)
+- belønne filmer/nøkkelord som er underrepresentert
+- velge filmpar med intern diversitet (unngår nesten-identiske forslag)
+
+`curatedImdbIds` oppfører seg fortsatt som før for tematreff, men utvalg innen treffene diversifiseres.
+
+## 8. Deploy til Vercel
 
 1. Push prosjektet til et Git-repository.
 2. Importer repositoryet i Vercel.

@@ -2,11 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getRelease } from "@/lib/releases";
 import { ReleaseActions } from "@/components/release-actions";
+import { effectiveKeywords } from "@/lib/keyword-utils";
 
 export default async function ReleasePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const r = await getRelease(id);
   if (!r) notFound();
+  const keywords = effectiveKeywords(r.manual_keywords, r.auto_keywords);
 
   return (
     <article className="detail">
@@ -38,6 +40,12 @@ export default async function ReleasePage({ params }: { params: Promise<{ id: st
           <dt>Region</dt><dd>{r.region ?? "–"}</dd>
           <dt>Utgave</dt><dd>{r.edition ?? "–"}</dd>
           <dt>Merknad</dt><dd style={{ whiteSpace: "pre-wrap" }}>{r.notes ?? "–"}</dd>
+          <dt>Nøkkelord (effektiv)</dt><dd>{keywords.length ? keywords.join(", ") : "–"}</dd>
+          <dt>Manuelle nøkkelord</dt><dd>{r.manual_keywords?.length ? r.manual_keywords.join(", ") : "–"}</dd>
+          <dt>Auto-kilde</dt><dd>{r.keywords_source ?? "–"}</dd>
+          <dt>Sist beriket</dt><dd>{r.keywords_updated_at ? new Date(r.keywords_updated_at).toLocaleString("nb-NO") : "–"}</dd>
+          <dt>Antall forslag</dt><dd>{r.times_suggested ?? 0}</dd>
+          <dt>Sist foreslått</dt><dd>{r.last_suggested_at ? new Date(r.last_suggested_at).toLocaleString("nb-NO") : "–"}</dd>
           <dt>Registrert</dt><dd>{new Date(r.created_at).toLocaleString("nb-NO")}</dd>
         </dl>
       </div>
