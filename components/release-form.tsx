@@ -930,421 +930,823 @@ export function ReleaseForm({
           }}
         />
 
-        <section className="panel">
-          <div className="metadata-assistant-heading">
-            <div>
-              <strong>Metadata fra TMDB</strong>
-              <small>
-                Fyll inn oversikt, spilletid,
-                sjangre og nøkkelord uten å
-                overskrive manuelle felt.
-              </small>
+        {release ? (
+          <>
+            <div className="disc-count-inline">
+              <span>Antall discer</span>
+
+              <select
+                value={String(discCount)}
+                onChange={(event) =>
+                  setDiscCount(
+                    Number(event.target.value),
+                  )
+                }
+              >
+                {[1, 2, 3, 4, 5, 6].map((count) => (
+                  <option
+                    key={count}
+                    value={count}
+                  >
+                    {count}
+                  </option>
+                ))}
+              </select>
             </div>
-          </div>
 
-          <div className="form-actions">
-            <button
-              type="button"
-              disabled={metadataBusy || busy}
-              onClick={() =>
-                void requestMetadataPreview()
-                  .catch((err) => {
-                    setError(
-                      err instanceof Error
-                        ? err.message
-                        : "Metadata kunne ikke hentes",
-                    );
-                  })
-              }
-            >
-              {metadataBusy
-                ? "Henter metadata …"
-                : "Fyll inn manglende metadata"}
-            </button>
-          </div>
+            <fieldset className="note-annotation-fieldset">
+              <legend>Merknadsvalg</legend>
 
-          {metadataLastEnrichedAt && (
+              <div className="note-annotation-options">
+                {structuredNoteLabels.map((label) => (
+                  <label
+                    key={label}
+                    className="note-annotation-option"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedNoteLabels.includes(
+                        label,
+                      )}
+                      onChange={() =>
+                        toggleStructuredNoteLabel(
+                          label,
+                        )
+                      }
+                    />
+
+                    <span>{label}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
+            <label>
+              Merknad
+
+              <textarea
+                name="notes"
+                value={customNotes}
+                onChange={(event) =>
+                  setCustomNotes(event.target.value)
+                }
+                placeholder="Egne tillegg, f.eks. Svensk cover"
+              />
+            </label>
+
             <p className="muted small">
-              Sist beriket:{" "}
-              {new Date(
-                metadataLastEnrichedAt,
-              ).toLocaleString("nb-NO")}
+              Valgene over lagres i samme merknadsfelt.
+              {notePreview
+                ? ` Resultat: ${notePreview}`
+                : " Resultat: –"}
             </p>
-          )}
 
-          {metadataPreview && (
-            <div className="admin-result">
-              <h3>Forslag før lagring</h3>
+            <label>
+              Manuelle nøkkelord (kommaseparert)
+              <input
+                name="manual_keywords"
+                value={manualKeywords}
+                onChange={(event) =>
+                  setManualKeywords(event.target.value)
+                }
+                placeholder="f.eks. genre:action, mood:dark, noir"
+              />
+            </label>
 
-              {metadataPreview.changedFields.length >
-              0 ? (
-                <ul className="duplicate-list">
-                  {metadataPreview.changedFields.map(
-                    (field) => (
-                      <li
-                        className="duplicate-match"
-                        key={field}
-                      >
-                        <strong>{field}</strong>
-                        <span>
-                          {previewFieldValue(
-                            field,
-                          )}{" "}
-                          →{" "}
-                          {formatPreviewValue(
-                            metadataPreview
-                              .metadata[field],
-                          )}
-                        </span>
-                      </li>
-                    ),
+            {!!autoKeywords.length && (
+              <p className="muted small">
+                Automatiske nøkkelord:{" "}
+                {autoKeywords.join(", ")}
+              </p>
+            )}
+
+            <details className="metadata-collapsible">
+              <summary>
+                <span className="metadata-collapsible-chevron" />
+                Vis metadata
+              </summary>
+
+              <div className="metadata-collapsible-body">
+                <section className="panel">
+                  <div className="metadata-assistant-heading">
+                    <strong>Metadata fra TMDB</strong>
+                  </div>
+
+                  <div className="form-actions">
+                    <button
+                      type="button"
+                      disabled={metadataBusy || busy}
+                      onClick={() =>
+                        void requestMetadataPreview()
+                          .catch((err) => {
+                            setError(
+                              err instanceof Error
+                                ? err.message
+                                : "Metadata kunne ikke hentes",
+                            );
+                          })
+                      }
+                    >
+                      {metadataBusy
+                        ? "Henter metadata …"
+                        : "Fyll inn manglende metadata"}
+                    </button>
+                  </div>
+
+                  {metadataLastEnrichedAt && (
+                    <p className="muted small">
+                      Sist beriket:{" "}
+                      {new Date(
+                        metadataLastEnrichedAt,
+                      ).toLocaleString("nb-NO")}
+                    </p>
                   )}
-                </ul>
-              ) : (
-                <p>
-                  Ingen manglende felter kunne
-                  fylles nå.
-                </p>
-              )}
+
+                  {metadataPreview && (
+                    <div className="admin-result">
+                      <h3>Forslag før lagring</h3>
+
+                      {metadataPreview.changedFields.length >
+                      0 ? (
+                        <ul className="duplicate-list">
+                          {metadataPreview.changedFields.map(
+                            (field) => (
+                              <li
+                                className="duplicate-match"
+                                key={field}
+                              >
+                                <strong>{field}</strong>
+                                <span>
+                                  {previewFieldValue(
+                                    field,
+                                  )}{" "}
+                                  →{" "}
+                                  {formatPreviewValue(
+                                    metadataPreview
+                                      .metadata[field],
+                                  )}
+                                </span>
+                              </li>
+                            ),
+                          )}
+                        </ul>
+                      ) : (
+                        <p>
+                          Ingen manglende felter kunne
+                          fylles nå.
+                        </p>
+                      )}
+
+                      <div className="form-actions">
+                        <button
+                          type="button"
+                          className="primary"
+                          disabled={
+                            metadataPreview
+                              .changedFields.length === 0
+                          }
+                          onClick={() => {
+                            applyMetadataPreview(
+                              metadataPreview.metadata,
+                            );
+                            setMetadataPreview(null);
+                          }}
+                        >
+                          Bruk metadataforslag
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setMetadataPreview(null)
+                          }
+                        >
+                          Lukk
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </section>
+
+                <label>
+                  Originaltittel
+
+                  <input
+                    name="original_title"
+                    required
+                    value={originalTitle}
+                    onChange={(event) =>
+                      {
+                        markManualField(
+                          "original_title",
+                        );
+                        setOriginalTitle(
+                          event.target.value,
+                        );
+                      }
+                    }
+                  />
+                </label>
+
+                <label>
+                  Alternativ tittel
+
+                  <input
+                    name="alternative_title"
+                    value={alternativeTitle}
+                    onChange={(event) =>
+                      {
+                        markManualField(
+                          "alternative_title",
+                        );
+                        setAlternativeTitle(
+                          event.target.value,
+                        );
+                      }
+                    }
+                  />
+                </label>
+
+                <div className="two-col">
+                  <label>
+                    Utgivelsesår
+
+                    <input
+                      name="release_year"
+                      type="number"
+                      min="1888"
+                      max={
+                        new Date().getFullYear() +
+                        1
+                      }
+                      value={releaseYear}
+                      onChange={(event) =>
+                        {
+                          markManualField(
+                            "release_year",
+                          );
+                          setReleaseYear(
+                            event.target.value,
+                          );
+                        }
+                      }
+                    />
+                  </label>
+
+                  <label>
+                    IMDb-score
+
+                    <input
+                      name="imdb_score"
+                      type="number"
+                      min="0"
+                      max="10"
+                      step="0.1"
+                      value={imdbScore}
+                      onChange={(event) =>
+                        setImdbScore(
+                          event.target.value,
+                        )
+                      }
+                    />
+                  </label>
+                </div>
+
+                <ImdbScoreButton
+                  releaseId={String(release.id)}
+                  imdbUrl={imdbUrl || null}
+                  onUpdated={(score) => {
+                    setImdbScore(String(score));
+                  }}
+                />
+
+                <label>
+                  IMDb-lenke
+
+                  <input
+                    name="imdb_url"
+                    type="url"
+                    value={imdbUrl}
+                    onChange={(event) =>
+                      {
+                        markManualField("imdb_url");
+                        setImdbUrl(
+                          event.target.value,
+                        );
+                      }
+                    }
+                    placeholder="https://www.imdb.com/title/tt..."
+                  />
+                </label>
+
+                <div className="two-col">
+                  <label>
+                    DVD-region
+
+                    <select
+                      name="region"
+                      value={region}
+                      onChange={(event) =>
+                        setRegion(
+                          event.target.value,
+                        )
+                      }
+                    >
+                      <option value="2">2</option>
+                      <option value="1">1</option>
+                    </select>
+                  </label>
+
+                  <label>
+                    Utgave / marked
+
+                    <select
+                      name="edition"
+                      value={edition}
+                      onChange={(event) =>
+                        setEdition(
+                          event.target.value,
+                        )
+                      }
+                    >
+                      <option value="Nordisk">
+                        Nordisk
+                      </option>
+
+                      <option value="UK">
+                        UK
+                      </option>
+
+                      <option value="US">
+                        US
+                      </option>
+
+                      <option value="Asia">
+                        Asia
+                      </option>
+
+                      <option value="Annet">
+                        Annet
+                      </option>
+                    </select>
+                  </label>
+                </div>
+
+                <label>
+                  Oversikt
+
+                  <textarea
+                    name="overview"
+                    value={overview}
+                    onChange={(event) => {
+                      markManualField("overview");
+                      setOverview(
+                        event.target.value,
+                      );
+                    }}
+                  />
+                </label>
+
+                <div className="two-col">
+                  <label>
+                    Spilletid (minutter)
+
+                    <input
+                      name="runtime_minutes"
+                      type="number"
+                      min="1"
+                      max="999"
+                      value={runtimeMinutes}
+                      onChange={(event) => {
+                        markManualField(
+                          "runtime_minutes",
+                        );
+                        setRuntimeMinutes(
+                          event.target.value,
+                        );
+                      }}
+                    />
+                  </label>
+
+                  <label>
+                    Sjangre
+
+                    <input
+                      name="genres"
+                      value={genres}
+                      onChange={(event) => {
+                        markManualField("genres");
+                        setGenres(
+                          event.target.value,
+                        );
+                      }}
+                      placeholder="Action, Thriller, Drama"
+                    />
+                  </label>
+                </div>
+              </div>
+            </details>
+          </>
+        ) : (
+          <>
+            <section className="panel">
+              <div className="metadata-assistant-heading">
+                <strong>Metadata fra TMDB</strong>
+              </div>
 
               <div className="form-actions">
                 <button
                   type="button"
-                  className="primary"
-                  disabled={
-                    metadataPreview
-                      .changedFields.length === 0
-                  }
-                  onClick={() => {
-                    applyMetadataPreview(
-                      metadataPreview.metadata,
-                    );
-                    setMetadataPreview(null);
-                  }}
-                >
-                  Bruk metadataforslag
-                </button>
-
-                <button
-                  type="button"
+                  disabled={metadataBusy || busy}
                   onClick={() =>
-                    setMetadataPreview(null)
+                    void requestMetadataPreview()
+                      .catch((err) => {
+                        setError(
+                          err instanceof Error
+                            ? err.message
+                            : "Metadata kunne ikke hentes",
+                        );
+                      })
                   }
                 >
-                  Lukk
+                  {metadataBusy
+                    ? "Henter metadata …"
+                    : "Fyll inn manglende metadata"}
                 </button>
               </div>
+
+              {metadataLastEnrichedAt && (
+                <p className="muted small">
+                  Sist beriket:{" "}
+                  {new Date(
+                    metadataLastEnrichedAt,
+                  ).toLocaleString("nb-NO")}
+                </p>
+              )}
+
+              {metadataPreview && (
+                <div className="admin-result">
+                  <h3>Forslag før lagring</h3>
+
+                  {metadataPreview.changedFields.length >
+                  0 ? (
+                    <ul className="duplicate-list">
+                      {metadataPreview.changedFields.map(
+                        (field) => (
+                          <li
+                            className="duplicate-match"
+                            key={field}
+                          >
+                            <strong>{field}</strong>
+                            <span>
+                              {previewFieldValue(
+                                field,
+                              )}{" "}
+                              →{" "}
+                              {formatPreviewValue(
+                                metadataPreview
+                                  .metadata[field],
+                              )}
+                            </span>
+                          </li>
+                        ),
+                      )}
+                    </ul>
+                  ) : (
+                    <p>
+                      Ingen manglende felter kunne
+                      fylles nå.
+                    </p>
+                  )}
+
+                  <div className="form-actions">
+                    <button
+                      type="button"
+                      className="primary"
+                      disabled={
+                        metadataPreview
+                          .changedFields.length === 0
+                      }
+                      onClick={() => {
+                        applyMetadataPreview(
+                          metadataPreview.metadata,
+                        );
+                        setMetadataPreview(null);
+                      }}
+                    >
+                      Bruk metadataforslag
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setMetadataPreview(null)
+                      }
+                    >
+                      Lukk
+                    </button>
+                  </div>
+                </div>
+              )}
+            </section>
+
+            <label>
+              Originaltittel
+
+              <input
+                name="original_title"
+                required
+                value={originalTitle}
+                onChange={(event) =>
+                  {
+                    markManualField(
+                      "original_title",
+                    );
+                    setOriginalTitle(
+                      event.target.value,
+                    );
+                  }
+                }
+              />
+            </label>
+
+            <label>
+              Alternativ tittel
+
+              <input
+                name="alternative_title"
+                value={alternativeTitle}
+                onChange={(event) =>
+                  {
+                    markManualField(
+                      "alternative_title",
+                    );
+                    setAlternativeTitle(
+                      event.target.value,
+                    );
+                  }
+                }
+              />
+            </label>
+
+            <div className="two-col">
+              <label>
+                Utgivelsesår
+
+                <input
+                  name="release_year"
+                  type="number"
+                  min="1888"
+                  max={
+                    new Date().getFullYear() +
+                    1
+                  }
+                  value={releaseYear}
+                  onChange={(event) =>
+                    {
+                      markManualField(
+                        "release_year",
+                      );
+                      setReleaseYear(
+                        event.target.value,
+                      );
+                    }
+                  }
+                />
+              </label>
+
+              <label>
+                IMDb-score
+
+                <input
+                  name="imdb_score"
+                  type="number"
+                  min="0"
+                  max="10"
+                  step="0.1"
+                  value={imdbScore}
+                  onChange={(event) =>
+                    setImdbScore(
+                      event.target.value,
+                    )
+                  }
+                />
+              </label>
             </div>
-          )}
-        </section>
 
-        <label>
-          Originaltittel
+            <label>
+              IMDb-lenke
 
-          <input
-            name="original_title"
-            required
-            value={originalTitle}
-            onChange={(event) =>
-              {
-                markManualField(
-                  "original_title",
-                );
-                setOriginalTitle(
-                  event.target.value,
-                );
-              }
-            }
-          />
-        </label>
+              <input
+                name="imdb_url"
+                type="url"
+                value={imdbUrl}
+                onChange={(event) =>
+                  {
+                    markManualField("imdb_url");
+                    setImdbUrl(
+                      event.target.value,
+                    );
+                  }
+                }
+                placeholder="https://www.imdb.com/title/tt..."
+              />
+            </label>
 
-        <label>
-          Alternativ tittel
+            <div className="two-col">
+              <label>
+                DVD-region
 
-          <input
-            name="alternative_title"
-            value={alternativeTitle}
-            onChange={(event) =>
-              {
-                markManualField(
-                  "alternative_title",
-                );
-                setAlternativeTitle(
-                  event.target.value,
-                );
-              }
-            }
-          />
-        </label>
+                <select
+                  name="region"
+                  value={region}
+                  onChange={(event) =>
+                    setRegion(
+                      event.target.value,
+                    )
+                  }
+                >
+                  <option value="2">2</option>
+                  <option value="1">1</option>
+                </select>
+              </label>
 
-        <div className="two-col">
-          <label>
-            Utgivelsesår
+              <label>
+                Utgave / marked
 
-            <input
-              name="release_year"
-              type="number"
-              min="1888"
-              max={
-                new Date().getFullYear() +
-                1
-              }
-              value={releaseYear}
-              onChange={(event) =>
-                {
-                  markManualField(
-                    "release_year",
-                  );
-                  setReleaseYear(
+                <select
+                  name="edition"
+                  value={edition}
+                  onChange={(event) =>
+                    setEdition(
+                      event.target.value,
+                    )
+                  }
+                >
+                  <option value="Nordisk">
+                    Nordisk
+                  </option>
+
+                  <option value="UK">
+                    UK
+                  </option>
+
+                  <option value="US">
+                    US
+                  </option>
+
+                  <option value="Asia">
+                    Asia
+                  </option>
+
+                  <option value="Annet">
+                    Annet
+                  </option>
+                </select>
+              </label>
+            </div>
+
+            <label>
+              Oversikt
+
+              <textarea
+                name="overview"
+                value={overview}
+                onChange={(event) => {
+                  markManualField("overview");
+                  setOverview(
                     event.target.value,
                   );
-                }
-              }
-            />
-          </label>
+                }}
+              />
+            </label>
 
-          <label>
-            IMDb-score
+            <div className="two-col">
+              <label>
+                Spilletid (minutter)
 
-            <input
-              name="imdb_score"
-              type="number"
-              min="0"
-              max="10"
-              step="0.1"
-              value={imdbScore}
-              onChange={(event) =>
-                setImdbScore(
-                  event.target.value,
-                )
-              }
-            />
-          </label>
-        </div>
+                <input
+                  name="runtime_minutes"
+                  type="number"
+                  min="1"
+                  max="999"
+                  value={runtimeMinutes}
+                  onChange={(event) => {
+                    markManualField(
+                      "runtime_minutes",
+                    );
+                    setRuntimeMinutes(
+                      event.target.value,
+                    );
+                  }}
+                />
+              </label>
 
-        {release && (
-          <ImdbScoreButton
-            releaseId={String(release.id)}
-            imdbUrl={imdbUrl || null}
-            onUpdated={(score) => {
-              setImdbScore(String(score));
-            }}
-          />
-        )}
+              <label>
+                Sjangre
 
-        <label>
-          IMDb-lenke
-
-          <input
-            name="imdb_url"
-            type="url"
-            value={imdbUrl}
-            onChange={(event) =>
-              {
-                markManualField("imdb_url");
-                setImdbUrl(
-                  event.target.value,
-                );
-              }
-            }
-            placeholder="https://www.imdb.com/title/tt..."
-          />
-        </label>
-
-        <div className="two-col">
-          <label>
-            DVD-region
-
-            <select
-              name="region"
-              value={region}
-              onChange={(event) =>
-                setRegion(
-                  event.target.value,
-                )
-              }
-            >
-              <option value="2">2</option>
-              <option value="1">1</option>
-            </select>
-          </label>
-
-          <label>
-            Utgave / marked
-
-            <select
-              name="edition"
-              value={edition}
-              onChange={(event) =>
-                setEdition(
-                  event.target.value,
-                )
-              }
-            >
-              <option value="Nordisk">
-                Nordisk
-              </option>
-
-              <option value="UK">
-                UK
-              </option>
-
-              <option value="US">
-                US
-              </option>
-
-              <option value="Asia">
-                Asia
-              </option>
-
-              <option value="Annet">
-                Annet
-              </option>
-            </select>
-          </label>
-        </div>
-
-        <label>
-          Oversikt
-
-          <textarea
-            name="overview"
-            value={overview}
-            onChange={(event) => {
-              markManualField("overview");
-              setOverview(
-                event.target.value,
-              );
-            }}
-          />
-        </label>
-
-        <div className="two-col">
-          <label>
-            Spilletid (minutter)
-
-            <input
-              name="runtime_minutes"
-              type="number"
-              min="1"
-              max="999"
-              value={runtimeMinutes}
-              onChange={(event) => {
-                markManualField(
-                  "runtime_minutes",
-                );
-                setRuntimeMinutes(
-                  event.target.value,
-                );
-              }}
-            />
-          </label>
-
-          <label>
-            Sjangre
-
-            <input
-              name="genres"
-              value={genres}
-              onChange={(event) => {
-                markManualField("genres");
-                setGenres(
-                  event.target.value,
-                );
-              }}
-              placeholder="Action, Thriller, Drama"
-            />
-          </label>
-        </div>
-
-        <div className="two-col">
-          <label>
-            Antall discer
-
-            <select
-              value={String(discCount)}
-              onChange={(event) =>
-                setDiscCount(
-                  Number(event.target.value),
-                )
-              }
-            >
-              {[1, 2, 3, 4, 5, 6].map((count) => (
-                <option
-                  key={count}
-                  value={count}
-                >
-                  {count}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <fieldset className="note-annotation-fieldset">
-            <legend>Merknadsvalg</legend>
-
-            <div className="note-annotation-options">
-              {structuredNoteLabels.map((label) => (
-                <label
-                  key={label}
-                  className="note-annotation-option"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedNoteLabels.includes(
-                      label,
-                    )}
-                    onChange={() =>
-                      toggleStructuredNoteLabel(
-                        label,
-                      )
-                    }
-                  />
-
-                  <span>{label}</span>
-                </label>
-              ))}
+                <input
+                  name="genres"
+                  value={genres}
+                  onChange={(event) => {
+                    markManualField("genres");
+                    setGenres(
+                      event.target.value,
+                    );
+                  }}
+                  placeholder="Action, Thriller, Drama"
+                />
+              </label>
             </div>
-          </fieldset>
-        </div>
 
-        <label>
-          Merknad
+            <div className="disc-count-inline">
+              <span>Antall discer</span>
 
-          <textarea
-            name="notes"
-            value={customNotes}
-            onChange={(event) =>
-              setCustomNotes(event.target.value)
-            }
-            placeholder="Egne tillegg, f.eks. Svensk cover"
-          />
-        </label>
+              <select
+                value={String(discCount)}
+                onChange={(event) =>
+                  setDiscCount(
+                    Number(event.target.value),
+                  )
+                }
+              >
+                {[1, 2, 3, 4, 5, 6].map((count) => (
+                  <option
+                    key={count}
+                    value={count}
+                  >
+                    {count}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        <p className="muted small">
-          Valgene over lagres i samme merknadsfelt.
-          {notePreview
-            ? ` Resultat: ${notePreview}`
-            : " Resultat: –"}
-        </p>
+            <fieldset className="note-annotation-fieldset">
+              <legend>Merknadsvalg</legend>
 
-        <label>
-          Manuelle nøkkelord (kommaseparert)
-          <input
-            name="manual_keywords"
-            value={manualKeywords}
-            onChange={(event) =>
-              setManualKeywords(event.target.value)
-            }
-            placeholder="f.eks. genre:action, mood:dark, noir"
-          />
-        </label>
+              <div className="note-annotation-options">
+                {structuredNoteLabels.map((label) => (
+                  <label
+                    key={label}
+                    className="note-annotation-option"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedNoteLabels.includes(
+                        label,
+                      )}
+                      onChange={() =>
+                        toggleStructuredNoteLabel(
+                          label,
+                        )
+                      }
+                    />
 
-        {!!autoKeywords.length && (
-          <p className="muted small">
-            Automatiske nøkkelord:{" "}
-            {autoKeywords.join(", ")}
-          </p>
+                    <span>{label}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
+            <label>
+              Merknad
+
+              <textarea
+                name="notes"
+                value={customNotes}
+                onChange={(event) =>
+                  setCustomNotes(event.target.value)
+                }
+                placeholder="Egne tillegg, f.eks. Svensk cover"
+              />
+            </label>
+
+            <p className="muted small">
+              Valgene over lagres i samme merknadsfelt.
+              {notePreview
+                ? ` Resultat: ${notePreview}`
+                : " Resultat: –"}
+            </p>
+
+            <label>
+              Manuelle nøkkelord (kommaseparert)
+              <input
+                name="manual_keywords"
+                value={manualKeywords}
+                onChange={(event) =>
+                  setManualKeywords(event.target.value)
+                }
+                placeholder="f.eks. genre:action, mood:dark, noir"
+              />
+            </label>
+
+            {!!autoKeywords.length && (
+              <p className="muted small">
+                Automatiske nøkkelord:{" "}
+                {autoKeywords.join(", ")}
+              </p>
+            )}
+          </>
         )}
 
         <p className="muted">

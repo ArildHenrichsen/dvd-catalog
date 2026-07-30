@@ -380,20 +380,9 @@ export function MovieMetadataAssistant({
       aria-labelledby="metadata-assistant-title"
     >
       <div className="metadata-assistant-heading">
-        <div>
-          <strong id="metadata-assistant-title">
-            Finn film fra cover
-          </strong>
-
-          <small>
-            Visuell matching foreslår filmer. Du
-            godkjenner alltid resultatet.
-          </small>
-        </div>
-
-        <span className="tmdb-credit">
-          Filmdata fra TMDB
-        </span>
+        <strong id="metadata-assistant-title">
+          Søk etter filmen
+        </strong>
       </div>
 
       <div className="metadata-assistant-actions">
@@ -407,7 +396,7 @@ export function MovieMetadataAssistant({
         >
           {busy === "visual"
             ? "Sammenligner …"
-            : "Finn filmen fra coveret"}
+            : "Finn film fra coverbilde"}
         </button>
 
         <div className="metadata-search-row">
@@ -418,7 +407,7 @@ export function MovieMetadataAssistant({
               onChange={(event) =>
                 setQuery(event.target.value)
               }
-              placeholder="Eller søk manuelt på tittel"
+              placeholder="Søk manuelt på tittel"
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   event.preventDefault();
