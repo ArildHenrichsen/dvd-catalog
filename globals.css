@@ -296,6 +296,35 @@ dialog::backdrop { background: rgb(0 0 0 / .58); backdrop-filter: blur(4px); }
 .wishlist-toggle-copy { display: grid; gap: .16rem; }
 .wishlist-toggle-copy strong { font-size: .96rem; }
 .wishlist-toggle-copy small { color: var(--muted); font-weight: 550; line-height: 1.35; }
+.note-annotation-fieldset {
+  display: grid;
+  gap: .7rem;
+  margin: 0;
+  padding: .82rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+.note-annotation-fieldset legend {
+  padding: 0 .32rem;
+  font-size: .9rem;
+  font-weight: 700;
+}
+.note-annotation-options {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: .6rem;
+}
+.note-annotation-option {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+}
+.note-annotation-option input {
+  width: 18px;
+  min-height: 18px;
+  height: 18px;
+  margin: 0;
+}
 
 .wishlist-card-label,
 .wishlist-badge {
@@ -323,6 +352,7 @@ dd { margin: .18rem 0 0; }
   .collection-tabs { display: grid; width: 100%; margin-top: .78rem; }
   .collection-tabs a { padding-inline: .45rem; }
   .wishlist-toggle { padding: .74rem; }
+  .note-annotation-options { grid-template-columns: 1fr; }
 }
 
 .metadata-assistant {
