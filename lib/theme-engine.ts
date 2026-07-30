@@ -205,7 +205,8 @@ export async function generateMovieNight(options?: { maxThemesToTest?: number })
 
         // If no movies yet, fallback to search/movie with query or keywords
         if (!movies.length) {
-          const query = theme.tmdbQuery.query ?? (theme.tmdbQuery.keywords ?? []).join(" ") || "";
+          const keywordsJoined = (theme.tmdbQuery.keywords ?? []).join(" ");
+          const query = (theme.tmdbQuery.query ?? keywordsJoined) || "";
           try {
             const payload = await tmdbFetch('/search/movie', { query: query || 'a', language: 'nb-NO', page: 1 });
             movies = payload.results ?? [];
