@@ -86,19 +86,33 @@ export async function generateMovieNight(options?: { maxThemesToTest?: number })
   const supabase = getSupabaseAdmin();
 
   // Fetch releases in collection (not wishlist)
-  const { data: releases, error } = await supabase
-    .from("releases")
-    .select(
-      "id,original_title,alternative_title,release_year,imdb_score,imdb_url,cover_url,thumbnail_url,is_wishlist,created_at,updated_at",
-    )
-    .eq("is_wishlist", false);
+  let allReleases: Release[] = [];
+  try {
+    const { data: releases, error } = await supabase
+      .from("releases")
+      .select(
+        "id,original_title,alternative_title,release_year,imdb_score,imdb_url,cover_url,thumbnail_url,is_wishlist,created_at,updated_at",
+      )
+      .eq("is_wishlist", false);
 
-  if (error) {
-    console.error("Supabase-feil ved henting av releases:", error);
-    return { success: false, message: "Klarte ikke hente samlingen fra databasen." } as const;
+    if (error) {
+      console.error("Supabase-feil ved henting av releases:", error);
+      return {
+        success: false as const,
+        message: "Klarte ikke hente samlingen fra databasen.",
+        error: { message: error.message ?? String(error), details: (error as any).details ?? null },
+      };
+    }
+
+    allReleases = (releases ?? []) as Release[];
+  } catch (ex) {
+    console.error("Exception ved henting av releases fra Supabase:", ex);
+    return {
+      success: false as const,
+      message: "Klarte ikke hente samlingen fra databasen.",
+      error: { message: (ex as Error).message ?? String(ex) },
+    };
   }
-
-  const allReleases: Release[] = (releases ?? []) as Release[];
 
   // Build lookup maps
   const imdbMap = new Map<string, Release[]>();
