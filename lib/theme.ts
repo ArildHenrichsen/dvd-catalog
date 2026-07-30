@@ -1,4 +1,4 @@
-export type ThemeSource = "collection" | "tmdb" | "curated";
+export type ThemeSource = "collection" | "tmdb";
 
 export type MovieTheme = {
   id: string;
@@ -25,12 +25,10 @@ export type MovieTheme = {
     query?: string; // free text search
     limit?: number;
   };
-
-  curatedImdbIds?: string[];
 };
 
 export const THEMES: MovieTheme[] = [
-  // --- Initial required themes (collection / tmdb / curated) ---
+  // --- Initial required themes (collection / tmdb) ---
   {
     id: "peak-bruce-willis",
     title: "Peak Bruce Willis",
@@ -106,44 +104,22 @@ export const THEMES: MovieTheme[] = [
     id: "cheesy-skrekk",
     title: "Cheesy skrekk",
     description: "Skrekk med sjarmerende lave budsjetter og høyt underholdningsnivå.",
-    source: "curated",
-    curatedImdbIds: [
-      "tt0083907", // The Evil Dead (1981)
-      "tt0092991", // Evil Dead II (1987)
-      "tt0103723", // Leprechaun (1993)
-      "tt0089885", // Re-Animator (1985)
-      "tt0084528", // Basket Case (1982)
-      "tt0091076", // Night of the Creeps (1986)
-      "tt0091225", // Howard the Duck (1986) (borderline-cheesy)
-      "tt0090310", // Troll (1986)
-    ],
+    source: "tmdb",
+    tmdbQuery: { query: "campy horror", keywords: ["camp", "cult horror", "b-movie"], genres: ["Horror"], yearFrom: 1970, limit: 14 },
   },
   {
     id: "cheesy-action",
     title: "Cheesy action",
     description: "Actionfilmer med store stunts og små logiske hull.",
-    source: "curated",
-    curatedImdbIds: [
-      "tt0088944", // Commando (1985)
-      "tt0092099", // The Delta Force (1986)
-      "tt0093437", // Road House (1989)
-      "tt0073195", // Death Wish (1974)
-      "tt0095016", // Die Hard (1988) - inkluder som populær action
-      "tt0103064", // Terminator 2: Judgment Day (1991)
-    ],
+    source: "tmdb",
+    tmdbQuery: { query: "campy action", keywords: ["one liner", "explosion", "cult action"], genres: ["Action"], yearFrom: 1970, limit: 14 },
   },
   {
     id: "so-bad-its-good",
     title: "So bad it's good",
     description: "Filmer som er underholdende fordi de er uventet dårlige.",
-    source: "curated",
-    curatedImdbIds: [
-      "tt0368226", // The Room (2003)
-      "tt0045076", // Plan 9 from Outer Space (1959)
-      "tt0091225", // Howard the Duck (1986)
-      "tt0090310", // Troll (1986)
-      "tt0114436", // Showgirls (1995)
-    ],
+    source: "tmdb",
+    tmdbQuery: { query: "cult bad movie", keywords: ["cult film", "b-movie", "so bad it's good"], genres: ["Comedy", "Horror"], limit: 14 },
   },
   {
     id: "spionfilmer",
@@ -212,28 +188,15 @@ export const THEMES: MovieTheme[] = [
     id: "praktiske-effekter",
     title: "Praktiske effekter",
     description: "Filmer kjent for praktiske effekter og praktisk stuntarbeid.",
-    source: "curated",
-    curatedImdbIds: [
-      "tt0084787", // The Thing (1982)
-      "tt0078748", // Alien (1979)
-      "tt0076759", // Star Wars: Episode IV - A New Hope (1977)
-      "tt0082971", // Raiders of the Lost Ark (1981)
-      "tt0082694", // Mad Max 2 (The Road Warrior) (1981)
-      "tt0092099", // The Delta Force (1986) - some practical stunts
-    ],
+    source: "tmdb",
+    tmdbQuery: { query: "practical effects", keywords: ["practical effects", "animatronics", "stunt"], genres: ["Action", "Science Fiction", "Horror"], limit: 12 },
   },
   {
     id: "kultklassikere",
     title: "Kultklassikere",
     description: "Filmer med kultstatus, kanskje ikke alltid kritikerrost.",
-    source: "curated",
-    curatedImdbIds: [
-      "tt0110912", // Pulp Fiction (1994)
-      "tt0137523", // Fight Club (1999)
-      "tt0118715", // The Big Lebowski (1998)
-      "tt0246578", // Donnie Darko (2001)
-      "tt0088258", // This Is Spinal Tap (1984)
-    ],
+    source: "tmdb",
+    tmdbQuery: { keywords: ["cult film", "cult classic"], limit: 14 },
   },
   {
     id: "en-mann-mot-alle",
@@ -253,14 +216,8 @@ export const THEMES: MovieTheme[] = [
     id: "fanget-paa-ett-sted",
     title: "Fanget på ett sted",
     description: "Klaustrofobiske filmer hvor handlingen foregår på ett sted.",
-    source: "curated",
-    curatedImdbIds: [
-      "tt1462758", // Buried (2010)
-      "tt0123755", // Cube (1997)
-      "tt0050083", // 12 Angry Men (1957)
-      "tt0037076", // Lifeboat (1944)
-      "tt0204946", // Phone Booth (2002)
-    ],
+    source: "tmdb",
+    tmdbQuery: { keywords: ["single location", "contained thriller", "claustrophobic"], genres: ["Thriller", "Drama", "Mystery"], limit: 12 },
   },
   {
     id: "tidsreise-med-konsekvenser",
@@ -296,25 +253,15 @@ export const THEMES: MovieTheme[] = [
     id: "love-triangle",
     title: "Kjærlighetstriangel",
     description: "Trekanthistorier hvor forhold og lojalitet utfordres.",
-    source: "curated",
-    curatedImdbIds: [
-      "tt0061729", // The Graduate (1967)
-      "tt0120338", // Titanic (1997)
-      "tt0376541", // Closer (2004)
-      "tt0364751", // Vicky Cristina Barcelona (2008)
-    ],
+    source: "tmdb",
+    tmdbQuery: { keywords: ["love triangle"], genres: ["Romance", "Drama"], limit: 12 },
   },
   {
     id: "slow-burn-romance",
     title: "Slow-burn-romantikk",
     description: "Filmer som bygger langsomt opp en intens følelsesmessig forbindelse.",
-    source: "curated",
-    curatedImdbIds: [
-      "tt0112471", // Before Sunrise (1995)
-      "tt0183523", // Before Sunset (2004)
-      "tt0335266", // Lost in Translation (2003)
-      "tt0118694", // In the Mood for Love (2000)
-    ],
+    source: "tmdb",
+    tmdbQuery: { keywords: ["slow burn romance"], genres: ["Romance", "Drama"], limit: 12 },
   },
   {
     id: "romantic-comedies-classics",
@@ -348,13 +295,8 @@ export const THEMES: MovieTheme[] = [
     id: "courtroom-drama",
     title: "Rettssal-dramaer",
     description: "Domstolsspenn og moralske dilemmaer.",
-    source: "curated",
-    curatedImdbIds: [
-      "tt0104257", // A Few Good Men (1992)
-      "tt0056592", // To Kill a Mockingbird (1962)
-      "tt0091530", // The Verdict (1982)
-      "tt0050083", // 12 Angry Men (1957)
-    ],
+    source: "tmdb",
+    tmdbQuery: { keywords: ["courtroom", "trial", "legal drama"], genres: ["Drama", "Crime"], limit: 12 },
   },
   {
     id: "family-drama",
@@ -388,12 +330,8 @@ export const THEMES: MovieTheme[] = [
     id: "nature-documentary",
     title: "Naturdokumentarer",
     description: "Storslåtte naturfilmer eller dyredokumentarer.",
-    source: "curated",
-    curatedImdbIds: [
-      "tt0428803", // March of the Penguins (2005)
-      "tt0363589", // Winged Migration (2001)
-      "tt0085809", // Koyaanisqatsi (1982)
-    ],
+    source: "tmdb",
+    tmdbQuery: { genres: ["Documentary"], keywords: ["nature", "wildlife"], limit: 12 },
   },
   {
     id: "true-crime-doc",
@@ -406,12 +344,8 @@ export const THEMES: MovieTheme[] = [
     id: "political-documentary",
     title: "Politikk og samfunn — dokumentar",
     description: "Dypdykk i makt, politikk eller samfunnsfenomener.",
-    source: "curated",
-    curatedImdbIds: [
-      "tt0317910", // The Fog of War (2003)
-      "tt1645089", // Inside Job (2010)
-      "tt3522806", // Citizenfour (2014)
-    ],
+    source: "tmdb",
+    tmdbQuery: { genres: ["Documentary"], keywords: ["politics", "society", "investigation"], limit: 12 },
   },
   {
     id: "investigative-doc",
@@ -424,13 +358,8 @@ export const THEMES: MovieTheme[] = [
     id: "whodunit-mystery",
     title: "Klassisk whodunit",
     description: "Mysterier med ledetråder, mystiske mord og en løsning på slutten.",
-    source: "curated",
-    curatedImdbIds: [
-      "tt0071877", // Murder on the Orient Express (1974)
-      "tt0088939", // Clue (1985)
-      "tt0175880", // Gosford Park (2001)
-      "tt8946378", // Knives Out (2019)
-    ],
+    source: "tmdb",
+    tmdbQuery: { keywords: ["whodunit", "murder mystery"], genres: ["Mystery", "Crime"], limit: 12 },
   },
   {
     id: "noir-mystery",
@@ -443,24 +372,15 @@ export const THEMES: MovieTheme[] = [
     id: "locked-room-mystery",
     title: "Låst rom / klaustrofobisk mysterium",
     description: "Små settinger, intense mistenkte og puslespill-løsninger.",
-    source: "curated",
-    curatedImdbIds: [
-      "tt0123755", // Cube (1997)
-      "tt1462758", // Buried (2010)
-      "tt1242432", // Exam (2009)
-      "tt0037076", // Lifeboat (1944)
-    ],
+    source: "tmdb",
+    tmdbQuery: { keywords: ["locked room", "single location mystery", "contained thriller"], genres: ["Mystery", "Thriller", "Drama"], limit: 12 },
   },
   {
     id: "gothic-mystery",
     title: "Gammel gotisk mystikk",
     description: "Gotisk stemning — slott, hemmeligheter og overtro.",
-    source: "curated",
-    curatedImdbIds: [
-      "tt0230600", // The Others (2001)
-      "tt0032976", // Rebecca (1940)
-      "tt2554274", // Crimson Peak (2015)
-    ],
+    source: "tmdb",
+    tmdbQuery: { keywords: ["gothic", "haunted house", "mystery"], genres: ["Mystery", "Drama", "Horror"], limit: 12 },
   },
   {
     id: "high-fantasy",
@@ -480,12 +400,8 @@ export const THEMES: MovieTheme[] = [
     id: "dark-fantasy",
     title: "Mørk fantasy",
     description: "Grim, voksen fantasy — moralgrumset, ofte visuelt tung.",
-    source: "curated",
-    curatedImdbIds: [
-      "tt0457430", // Pan's Labyrinth (2006)
-      "tt0060827", // The Wicker Man (1973)
-      "tt0091369", // Legend (1985)
-    ],
+    source: "tmdb",
+    tmdbQuery: { keywords: ["dark fantasy"], genres: ["Fantasy", "Drama", "Horror"], limit: 12 },
   },
   {
     id: "myth-legend",
@@ -505,12 +421,8 @@ export const THEMES: MovieTheme[] = [
     id: "coming-of-age-mystery",
     title: "Ungdom, oppvekst og mysterier",
     description: "Voksesmerter + et underliggende mysterium (unge protagonister og gåter).",
-    source: "curated",
-    curatedImdbIds: [
-      "tt0092005", // Stand by Me (1986)
-      "tt0120268", // The Virgin Suicides (1999)
-      "tt0118799", // The Mighty (1998)
-    ],
+    source: "tmdb",
+    tmdbQuery: { keywords: ["coming of age", "mystery"], genres: ["Drama", "Mystery"], limit: 12 },
   },
   {
     id: "romantic-thriller",
@@ -523,11 +435,100 @@ export const THEMES: MovieTheme[] = [
     id: "fantasy-folklore",
     title: "Folkeeventyr og magisk realisme",
     description: "Filmer som blandes mellom folklore, magisk realisme og symbolikk.",
-    source: "curated",
-    curatedImdbIds: [
-      "tt0096283", // My Neighbor Totoro (1988)
-      "tt0245429", // Spirited Away (2001)
-      "tt0457430", // Pan's Labyrinth (2006)
-    ],
+    source: "tmdb",
+    tmdbQuery: { keywords: ["folklore", "magical realism"], genres: ["Fantasy", "Drama"], limit: 12 },
+  },
+
+  // --- Nye regler ---
+  {
+    id: "musikaler",
+    title: "Musikaler",
+    description: "Store melodier, koreografi og historier hvor rollefigurene plutselig begynner å synge.",
+    source: "tmdb",
+    tmdbQuery: { genres: ["Music", "Drama", "Comedy"], keywords: ["musical", "song and dance"], limit: 12 },
+  },
+  {
+    id: "mafiafilmer",
+    title: "Mafiafilmer",
+    description: "Familie, lojalitet, makt og organiserte forbrytelser med alvorlige personalproblemer.",
+    source: "tmdb",
+    tmdbQuery: { genres: ["Crime", "Drama"], keywords: ["mafia", "organized crime", "mob"], limit: 12 },
+  },
+  {
+    id: "britiske-gangstere",
+    title: "Britiske gangstere",
+    description: "Skarpe dresser, tørr dialog og kriminelle miljøer på den andre siden av Atlanteren.",
+    source: "tmdb",
+    tmdbQuery: { genres: ["Crime", "Thriller"], keywords: ["british gangster", "london underworld"], query: "british crime", limit: 12 },
+  },
+  {
+    id: "quotable-filmer",
+    title: "Quotable filmer",
+    description: "Filmer hvor halve opplevelsen er å sitere replikkene etterpå.",
+    source: "tmdb",
+    tmdbQuery: { keywords: ["cult film", "classic", "one liner"], genres: ["Comedy", "Crime", "Action"], limit: 12 },
+  },
+  {
+    id: "undervurdert-bruce-willis",
+    title: "Undervurdert Bruce Willis",
+    description: "Mindre opplagte Willis-filmer hvor han spiller mer sårbart, lavmælt eller selvironisk enn i de største actionfilmene.",
+    source: "tmdb",
+    tmdbQuery: { person: "Bruce Willis", personRole: "actor", yearFrom: 1985, keywords: ["drama", "dark comedy", "neo-noir"], limit: 20 },
+  },
+  {
+    id: "undervurdert-sylvester-stallone",
+    title: "Undervurdert Sylvester Stallone",
+    description: "Stallone utenfor Rocky og Rambo, i tidlige roller, mørkere thrillere og mer dramatiske karakterstudier.",
+    source: "tmdb",
+    tmdbQuery: { person: "Sylvester Stallone", personRole: "actor", yearFrom: 1970, keywords: ["crime", "thriller", "drama"], limit: 20 },
+  },
+  {
+    id: "undervurdert-arnold-schwarzenegger",
+    title: "Undervurdert Arnold Schwarzenegger",
+    description: "Filmer som viser komisk timing, selvironi eller mer dramatisk spill enn den typiske actionhelten.",
+    source: "tmdb",
+    tmdbQuery: { person: "Arnold Schwarzenegger", personRole: "actor", keywords: ["comedy", "satire", "drama"], limit: 20 },
+  },
+  {
+    id: "undervurdert-nicolas-cage",
+    title: "Undervurdert Nicolas Cage",
+    description: "Tidlige, mindre eller oversette filmer hvor Cage viser registeret bak den berømte intensiteten.",
+    source: "tmdb",
+    tmdbQuery: { person: "Nicolas Cage", personRole: "actor", yearTo: 2010, keywords: ["independent film", "drama", "comedy"], limit: 20 },
+  },
+  {
+    id: "undervurdert-clint-eastwood",
+    title: "Undervurdert Clint Eastwood",
+    description: "Mindre omtalte filmer hvor Eastwood utfordrer western- og Dirty Harry-personaen sin.",
+    source: "tmdb",
+    tmdbQuery: { person: "Clint Eastwood", personRole: "actor", keywords: ["drama", "thriller", "character study"], limit: 20 },
+  },
+  {
+    id: "undervurdert-kurt-russell",
+    title: "Undervurdert Kurt Russell",
+    description: "Roller utenfor de mest kjente Carpenter-filmene, med svart humor, drama og mørkere karakterarbeid.",
+    source: "tmdb",
+    tmdbQuery: { person: "Kurt Russell", personRole: "actor", keywords: ["dark comedy", "crime", "drama"], limit: 20 },
+  },
+  {
+    id: "undervurdert-johnny-depp",
+    title: "Undervurdert Johnny Depp",
+    description: "Særpregede, lavmælte eller risikable roller som ofte havner i skyggen av hans største kommersielle filmer.",
+    source: "tmdb",
+    tmdbQuery: { person: "Johnny Depp", personRole: "actor", keywords: ["independent film", "drama", "biographical"], limit: 20 },
+  },
+  {
+    id: "undervurdert-jack-nicholson",
+    title: "Undervurdert Jack Nicholson",
+    description: "Underkjente og mer tilbakeholdne Nicholson-prestasjoner utenfor de mest siterte klassikerne.",
+    source: "tmdb",
+    tmdbQuery: { person: "Jack Nicholson", personRole: "actor", keywords: ["drama", "romance", "character study"], limit: 20 },
+  },
+  {
+    id: "parodi-spoof",
+    title: "Parodi / spoof",
+    description: "Filmer som gjør narr av etablerte sjangre, filmklisjeer og kjente titler gjennom overdrivelse, absurditet og tettpakket referansehumor.",
+    source: "tmdb",
+    tmdbQuery: { genres: ["Comedy"], keywords: ["spoof", "parody", "satire"], limit: 12 },
   },
 ];

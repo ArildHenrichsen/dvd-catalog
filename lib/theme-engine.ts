@@ -105,25 +105,25 @@ function scoreCandidate(
   const daysSinceLast = release.last_suggested_at
     ? (nowMs - new Date(release.last_suggested_at).getTime()) / (1000 * 60 * 60 * 24)
     : Infinity;
-  let score = Math.random() * 0.25;
-  if (daysSinceLast < 14) score -= 2.6 * (1 - daysSinceLast / 14);
-  if (recentlySuggestedIds.has(release.id)) score -= 1.5;
-  score -= Math.min(2.2, times * 0.14);
-  score += 0.9 / (1 + times);
-  score -= Math.min(2, recentThemeCount * 0.55);
+  let score = Math.random() * 0.7;
+  if (daysSinceLast < 21) score -= 2.8 * (1 - daysSinceLast / 21);
+  if (recentlySuggestedIds.has(release.id)) score -= 1.8;
+  score -= Math.min(2.4, times * 0.16);
+  score += 1.05 / (1 + times);
+  score -= Math.min(2.2, recentThemeCount * 0.6);
 
   const movieThemeCount = release.theme_suggestion_counts?.[themeId] ?? 0;
-  score -= Math.min(1.6, movieThemeCount * 0.35);
+  score -= Math.min(1.8, movieThemeCount * 0.4);
 
   const keywords = effectiveKeywords(release.manual_keywords, release.auto_keywords);
   if (keywords.length) {
     for (const keyword of keywords) {
       const count = recentKeywordCount.get(keyword) ?? 0;
-      if (count > 0) score -= Math.min(0.9, count * 0.17);
-      else score += 0.06;
+      if (count > 0) score -= Math.min(1.0, count * 0.2);
+      else score += 0.08;
     }
   } else {
-    score += 0.05;
+    score += 0.06;
   }
   return { score, keywords };
 }
@@ -161,6 +161,15 @@ async function persistSuggestion(
   } catch (error) {
     console.error("Kunne ikke lagre forslagshistorikk:", error);
   }
+}
+
+function shuffleArray<T>(arr: T[]): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
 }
 
 export async function generateMovieNight(options?: { maxThemesToTest?: number }) {
@@ -280,7 +289,7 @@ export async function generateMovieNight(options?: { maxThemesToTest?: number })
     console.error("Kunne ikke lese movie_night_history, fortsetter uten historikk:", error);
   }
 
-  const themes = [...THEMES].sort(() => Math.random() - 0.5);
+  const themes = shuffleArray(THEMES);
   let tested = 0;
 
   for (const theme of themes) {
@@ -328,16 +337,6 @@ export async function generateMovieNight(options?: { maxThemesToTest?: number })
             }));
           }
         }
-      } else if (theme.source === "curated" && theme.curatedImdbIds && theme.curatedImdbIds.length) {
-        for (const imdb of theme.curatedImdbIds) {
-          const found = imdbMap.get(imdb.toLowerCase());
-          if (found) {
-            for (const r of found) {
-              matched.push({ release: r, reason: `Kurert liste (IMDb ${imdb})` });
-              extraSet.set(r.id, r);
-            }
-          }
-        }
       } else if (theme.source === "tmdb" && theme.tmdbQuery) {
         let movies: any[] = [];
         if (theme.tmdbQuery.person) {
@@ -365,7 +364,8 @@ export async function generateMovieNight(options?: { maxThemesToTest?: number })
           }
         }
 
-        const limit = theme.tmdbQuery.limit ?? 12;
+        movies = shuffleArray(movies);
+        const limit = Math.min(theme.tmdbQuery.limit ?? 12, movies.length);
         movies = movies.slice(0, limit);
 
         for (const m of movies) {
@@ -373,14 +373,14 @@ export async function generateMovieNight(options?: { maxThemesToTest?: number })
           const key = titleYearKey(m.original_title ?? m.title, y);
           const found = titleYearMap.get(key);
           if (!found) continue;
-          for (const r of found) {
+          for (const r of shuffleArray(found)) {
             if (extraSet.has(r.id)) continue;
             matched.push({ release: r, reason: `TMDB: matcher tittel/år (${m.original_title ?? m.title}${y ? `, ${y}` : ""})` });
             extraSet.set(r.id, r);
           }
         }
 
-        if (matched.length < 2) {
+        if (matched.length < 4) {
           for (const m of movies) {
             try {
               const ext = await tmdbFetch(`/movie/${m.id}/external_ids`, { language: "nb-NO" });
@@ -388,7 +388,7 @@ export async function generateMovieNight(options?: { maxThemesToTest?: number })
               if (!imdbId) continue;
               const found = imdbMap.get(imdbId);
               if (!found) continue;
-              for (const r of found) {
+              for (const r of shuffleArray(found)) {
                 if (extraSet.has(r.id)) continue;
                 matched.push({ release: r, reason: `TMDB: IMDb-match (${imdbId})` });
                 extraSet.set(r.id, r);
@@ -396,17 +396,17 @@ export async function generateMovieNight(options?: { maxThemesToTest?: number })
             } catch (e) {
               console.error("TMDB external ids fetch failed", e);
             }
-            if (matched.length >= 2) break;
+            if (matched.length >= 6) break;
           }
         }
       }
 
       const unique = new Map<string, { release: ReleaseWithKeywords; reason: string }>();
-      for (const m of matched) {
+      for (const m of shuffleArray(matched)) {
         if (!unique.has(m.release.id)) unique.set(m.release.id, m);
       }
 
-      const results = Array.from(unique.values());
+      const results = shuffleArray(Array.from(unique.values()));
       if (results.length >= 2) {
         const nowMs = Date.now();
         const themePenalty = recentThemeCount.get(theme.id) ?? 0;
@@ -419,13 +419,17 @@ export async function generateMovieNight(options?: { maxThemesToTest?: number })
           };
         });
         candidates.sort((a, b) => b.score - a.score);
-        const pool = candidates.slice(0, Math.max(2, Math.min(16, candidates.length)));
-        const pair = pickBestDiversePair(pool.map(c => ({ id: c.release.id, score: c.score, keywords: c.keywords })));
 
-        const pickedIds = pair ? new Set([pair[0].id, pair[1].id]) : new Set(pool.slice(0, 2).map(p => p.release.id));
-        const chosen = candidates.filter(c => pickedIds.has(c.release.id)).slice(0, 2);
+        const poolSize = Math.max(4, Math.min(20, candidates.length));
+        const topPool = candidates.slice(0, poolSize);
+        const randomizedPool = shuffleArray(topPool).slice(0, Math.max(3, Math.min(10, topPool.length)));
+
+        const pair = pickBestDiversePair(randomizedPool.map(c => ({ id: c.release.id, score: c.score, keywords: c.keywords })));
+
+        const pickedIds = pair ? new Set([pair[0].id, pair[1].id]) : new Set(randomizedPool.slice(0, 2).map(p => p.release.id));
+        const chosen = shuffleArray(candidates.filter(c => pickedIds.has(c.release.id))).slice(0, 2);
         if (chosen.length < 2) continue;
-        const extras = candidates.filter(c => !pickedIds.has(c.release.id)).map(c => c.release);
+        const extras = shuffleArray(candidates.filter(c => !pickedIds.has(c.release.id)).map(c => c.release));
         const keywordSet = Array.from(new Set(chosen.flatMap(c => c.keywords)));
         await persistSuggestion(
           supabase,
