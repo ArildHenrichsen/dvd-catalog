@@ -107,21 +107,43 @@ export const THEMES: MovieTheme[] = [
     title: "Cheesy skrekk",
     description: "Skrekk med sjarmerende lave budsjetter og høyt underholdningsnivå.",
     source: "curated",
-    curatedImdbIds: [],
+    curatedImdbIds: [
+      "tt0083907", // The Evil Dead (1981)
+      "tt0092991", // Evil Dead II (1987)
+      "tt0103723", // Leprechaun (1993)
+      "tt0089885", // Re-Animator (1985)
+      "tt0084528", // Basket Case (1982)
+      "tt0091076", // Night of the Creeps (1986)
+      "tt0091225", // Howard the Duck (1986) (borderline-cheesy)
+      "tt0090310", // Troll (1986)
+    ],
   },
   {
     id: "cheesy-action",
     title: "Cheesy action",
     description: "Actionfilmer med store stunts og små logiske hull.",
     source: "curated",
-    curatedImdbIds: [],
+    curatedImdbIds: [
+      "tt0088944", // Commando (1985)
+      "tt0092099", // The Delta Force (1986)
+      "tt0093437", // Road House (1989)
+      "tt0073195", // Death Wish (1974)
+      "tt0095016", // Die Hard (1988) - inkluder som populær action
+      "tt0103064", // Terminator 2: Judgment Day (1991)
+    ],
   },
   {
     id: "so-bad-its-good",
     title: "So bad it's good",
     description: "Filmer som er underholdende fordi de er uventet dårlige.",
     source: "curated",
-    curatedImdbIds: [],
+    curatedImdbIds: [
+      "tt0368226", // The Room (2003)
+      "tt0045076", // Plan 9 from Outer Space (1959)
+      "tt0091225", // Howard the Duck (1986)
+      "tt0090310", // Troll (1986)
+      "tt0114436", // Showgirls (1995)
+    ],
   },
   {
     id: "spionfilmer",
@@ -191,14 +213,27 @@ export const THEMES: MovieTheme[] = [
     title: "Praktiske effekter",
     description: "Filmer kjent for praktiske effekter og praktisk stuntarbeid.",
     source: "curated",
-    curatedImdbIds: [],
+    curatedImdbIds: [
+      "tt0084787", // The Thing (1982)
+      "tt0078748", // Alien (1979)
+      "tt0076759", // Star Wars: Episode IV - A New Hope (1977)
+      "tt0082971", // Raiders of the Lost Ark (1981)
+      "tt0082694", // Mad Max 2 (The Road Warrior) (1981)
+      "tt0092099", // The Delta Force (1986) - some practical stunts
+    ],
   },
   {
     id: "kultklassikere",
     title: "Kultklassikere",
     description: "Filmer med kultstatus, kanskje ikke alltid kritikerrost.",
     source: "curated",
-    curatedImdbIds: [],
+    curatedImdbIds: [
+      "tt0110912", // Pulp Fiction (1994)
+      "tt0137523", // Fight Club (1999)
+      "tt0118715", // The Big Lebowski (1998)
+      "tt0246578", // Donnie Darko (2001)
+      "tt0088258", // This Is Spinal Tap (1984)
+    ],
   },
   {
     id: "en-mann-mot-alle",
@@ -219,7 +254,13 @@ export const THEMES: MovieTheme[] = [
     title: "Fanget på ett sted",
     description: "Klaustrofobiske filmer hvor handlingen foregår på ett sted.",
     source: "curated",
-    curatedImdbIds: [],
+    curatedImdbIds: [
+      "tt1462758", // Buried (2010)
+      "tt0123755", // Cube (1997)
+      "tt0050083", // 12 Angry Men (1957)
+      "tt0037076", // Lifeboat (1944)
+      "tt0204946", // Phone Booth (2002)
+    ],
   },
   {
     id: "tidsreise-med-konsekvenser",
@@ -256,14 +297,24 @@ export const THEMES: MovieTheme[] = [
     title: "Kjærlighetstriangel",
     description: "Trekanthistorier hvor forhold og lojalitet utfordres.",
     source: "curated",
-    curatedImdbIds: [],
+    curatedImdbIds: [
+      "tt0061729", // The Graduate (1967)
+      "tt0120338", // Titanic (1997)
+      "tt0376541", // Closer (2004)
+      "tt0364751", // Vicky Cristina Barcelona (2008)
+    ],
   },
   {
     id: "slow-burn-romance",
     title: "Slow-burn-romantikk",
     description: "Filmer som bygger langsomt opp en intens følelsesmessig forbindelse.",
     source: "curated",
-    curatedImdbIds: [],
+    curatedImdbIds: [
+      "tt0112471", // Before Sunrise (1995)
+      "tt0183523", // Before Sunset (2004)
+      "tt0335266", // Lost in Translation (2003)
+      "tt0118694", // In the Mood for Love (2000)
+    ],
   },
   {
     id: "romantic-comedies-classics",
@@ -298,7 +349,12 @@ export const THEMES: MovieTheme[] = [
     title: "Rettssal-dramaer",
     description: "Domstolsspenn og moralske dilemmaer.",
     source: "curated",
-    curatedImdbIds: [],
+    curatedImdbIds: [
+      "tt0104257", // A Few Good Men (1992)
+      "tt0056592", // To Kill a Mockingbird (1962)
+      "tt0091530", // The Verdict (1982)
+      "tt0050083", // 12 Angry Men (1957)
+    ],
   },
   {
     id: "family-drama",
@@ -333,7 +389,11 @@ export const THEMES: MovieTheme[] = [
     title: "Naturdokumentarer",
     description: "Storslåtte naturfilmer eller dyredokumentarer.",
     source: "curated",
-    curatedImdbIds: [],
+    curatedImdbIds: [
+      "tt0428803", // March of the Penguins (2005)
+      "tt0363589", // Winged Migration (2001)
+      "tt0085809", // Koyaanisqatsi (1982)
+    ],
   },
   {
     id: "true-crime-doc",
@@ -347,7 +407,11 @@ export const THEMES: MovieTheme[] = [
     title: "Politikk og samfunn — dokumentar",
     description: "Dypdykk i makt, politikk eller samfunnsfenomener.",
     source: "curated",
-    curatedImdbIds: [],
+    curatedImdbIds: [
+      "tt0317910", // The Fog of War (2003)
+      "tt1645089", // Inside Job (2010)
+      "tt3522806", // Citizenfour (2014)
+    ],
   },
   {
     id: "investigative-doc",
@@ -361,7 +425,12 @@ export const THEMES: MovieTheme[] = [
     title: "Klassisk whodunit",
     description: "Mysterier med ledetråder, mystiske mord og en løsning på slutten.",
     source: "curated",
-    curatedImdbIds: [],
+    curatedImdbIds: [
+      "tt0071877", // Murder on the Orient Express (1974)
+      "tt0088939", // Clue (1985)
+      "tt0175880", // Gosford Park (2001)
+      "tt8946378", // Knives Out (2019)
+    ],
   },
   {
     id: "noir-mystery",
@@ -375,14 +444,23 @@ export const THEMES: MovieTheme[] = [
     title: "Låst rom / klaustrofobisk mysterium",
     description: "Små settinger, intense mistenkte og puslespill-løsninger.",
     source: "curated",
-    curatedImdbIds: [],
+    curatedImdbIds: [
+      "tt0123755", // Cube (1997)
+      "tt1462758", // Buried (2010)
+      "tt1242432", // Exam (2009)
+      "tt0037076", // Lifeboat (1944)
+    ],
   },
   {
     id: "gothic-mystery",
     title: "Gammel gotisk mystikk",
     description: "Gotisk stemning — slott, hemmeligheter og overtro.",
     source: "curated",
-    curatedImdbIds: [],
+    curatedImdbIds: [
+      "tt0230600", // The Others (2001)
+      "tt0032976", // Rebecca (1940)
+      "tt2554274", // Crimson Peak (2015)
+    ],
   },
   {
     id: "high-fantasy",
@@ -403,7 +481,11 @@ export const THEMES: MovieTheme[] = [
     title: "Mørk fantasy",
     description: "Grim, voksen fantasy — moralgrumset, ofte visuelt tung.",
     source: "curated",
-    curatedImdbIds: [],
+    curatedImdbIds: [
+      "tt0457430", // Pan's Labyrinth (2006)
+      "tt0060827", // The Wicker Man (1973)
+      "tt0091369", // Legend (1985)
+    ],
   },
   {
     id: "myth-legend",
@@ -424,7 +506,11 @@ export const THEMES: MovieTheme[] = [
     title: "Ungdom, oppvekst og mysterier",
     description: "Voksesmerter + et underliggende mysterium (unge protagonister og gåter).",
     source: "curated",
-    curatedImdbIds: [],
+    curatedImdbIds: [
+      "tt0092005", // Stand by Me (1986)
+      "tt0120268", // The Virgin Suicides (1999)
+      "tt0118799", // The Mighty (1998)
+    ],
   },
   {
     id: "romantic-thriller",
@@ -438,6 +524,10 @@ export const THEMES: MovieTheme[] = [
     title: "Folkeeventyr og magisk realisme",
     description: "Filmer som blandes mellom folklore, magisk realisme og symbolikk.",
     source: "curated",
-    curatedImdbIds: [],
+    curatedImdbIds: [
+      "tt0096283", // My Neighbor Totoro (1988)
+      "tt0245429", // Spirited Away (2001)
+      "tt0457430", // Pan's Labyrinth (2006)
+    ],
   },
 ];
