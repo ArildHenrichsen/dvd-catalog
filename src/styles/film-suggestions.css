@@ -1,0 +1,13 @@
+@media (min-width: 1024px) {
+  .film-suggestions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 202.8px);
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  article.film-suggestion {
+    width: 202.8px;
+    max-width: 202.8px;
+  }
+}
