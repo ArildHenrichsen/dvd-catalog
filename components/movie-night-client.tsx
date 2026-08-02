@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Release } from "@/lib/types";
 import { ReleaseCard } from "@/components/release-card";
@@ -24,7 +25,8 @@ type ApiSuccess = {
 
 type ApiNoMatch = { success: false; message: string };
 
-const MOVIE_NIGHT_STORAGE_KEY = "dvd-catalog:movie-night-result";
+const MOVIE_NIGHT_STORAGE_PREFIX = "dvd-catalog:movie-night-result";
+const MOVIE_NIGHT_RESULT_PARAM = "result";
 
 export default function MovieNightClient() {
   const [loading, setLoading] = useState(false);
@@ -32,23 +34,37 @@ export default function MovieNightClient() {
   const [result, setResult] = useState<ApiSuccess | null>(null);
 
   useEffect(() => {
+    const url = new URL(window.location.href);
+    const resultId = url.searchParams.get(MOVIE_NIGHT_RESULT_PARAM);
+    if (!resultId) return;
+
+    const storageKey = MOVIE_NIGHT_STORAGE_PREFIX + ":" + resultId;
     try {
-      const savedResult = sessionStorage.getItem(MOVIE_NIGHT_STORAGE_KEY);
-      if (!savedResult) return;
+      const savedResult = sessionStorage.getItem(storageKey);
+      if (!savedResult) {
+        url.searchParams.delete(MOVIE_NIGHT_RESULT_PARAM);
+        window.history.replaceState(window.history.state, "", url);
+        return;
+      }
 
       const parsedResult = JSON.parse(savedResult) as ApiSuccess;
       if (parsedResult.success) setResult(parsedResult);
     } catch (e) {
-      console.warn("Kunne ikke gjenopprette forrige filmkveld.", e);
-      sessionStorage.removeItem(MOVIE_NIGHT_STORAGE_KEY);
+      console.warn("Kunne ikke gjenopprette filmkvelden fra URL-en.", e);
+      sessionStorage.removeItem(storageKey);
+      url.searchParams.delete(MOVIE_NIGHT_RESULT_PARAM);
+      window.history.replaceState(window.history.state, "", url);
     }
   }, []);
 
   useEffect(() => {
     if (!result) return;
 
+    const resultId = new URL(window.location.href).searchParams.get(MOVIE_NIGHT_RESULT_PARAM);
+    if (!resultId) return;
+
     try {
-      sessionStorage.setItem(MOVIE_NIGHT_STORAGE_KEY, JSON.stringify(result));
+      sessionStorage.setItem(MOVIE_NIGHT_STORAGE_PREFIX + ":" + resultId, JSON.stringify(result));
     } catch (e) {
       console.warn("Kunne ikke lagre filmkvelden.", e);
     }
@@ -59,6 +75,12 @@ export default function MovieNightClient() {
     setError(null);
     setResult(null);
 
+    const currentUrl = new URL(window.location.href);
+    const previousResultId = currentUrl.searchParams.get(MOVIE_NIGHT_RESULT_PARAM);
+    if (previousResultId) sessionStorage.removeItem(MOVIE_NIGHT_STORAGE_PREFIX + ":" + previousResultId);
+    currentUrl.searchParams.delete(MOVIE_NIGHT_RESULT_PARAM);
+    window.history.replaceState(window.history.state, "", currentUrl);
+
     try {
       const res = await fetch("/api/movie-night/generate");
       const payload = (await res.json()) as ApiSuccess | ApiNoMatch;
@@ -67,6 +89,11 @@ export default function MovieNightClient() {
       } else if (!payload.success) {
         setError(payload.message ?? "Ingen passende temaer funnet.");
       } else {
+        const resultId = crypto.randomUUID();
+        sessionStorage.setItem(MOVIE_NIGHT_STORAGE_PREFIX + ":" + resultId, JSON.stringify(payload));
+        const resultUrl = new URL(window.location.href);
+        resultUrl.searchParams.set(MOVIE_NIGHT_RESULT_PARAM, resultId);
+        window.history.replaceState(window.history.state, "", resultUrl);
         setResult(payload);
       }
     } catch (e) {
@@ -91,14 +118,6 @@ export default function MovieNightClient() {
       reason: "Valgt fra flere treff for temaet",
     }));
     setResult({ ...result, films, totalMatches: result.totalMatches });
-  }, [result]);
-
-  const showAllMatches = useCallback(() => {
-    if (!result) return;
-    alert(
-      `Totalt ${result.totalMatches} treff for temaet "${result.theme.title}".\n` +
-        `Visning av alle treff er foreløpig minimal — bruk API direkte for full liste.`,
-    );
   }, [result]);
 
   const content = useMemo(() => {
@@ -141,14 +160,11 @@ export default function MovieNightClient() {
               disabled={!(result.extras && result.extras.length >= 2)}
             >
               Velg to andre filmer
-            </button>{" "}
-            <button className="button" onClick={showAllMatches}>
-              Vis alle treff ({result.totalMatches})
             </button>
           </div>
         </section>
 
-        <section className="film-cards" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginTop: "1rem" }}>
+        <section className="film-cards" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 280px))", gap: "1rem", marginTop: "1rem" }}>
           {result.films.map(f => (
             <article key={f.release.id} className="film-suggestion">
               <ReleaseCard release={f.release} />
@@ -164,7 +180,7 @@ export default function MovieNightClient() {
             <summary>Flere treff ({result.extras.length})</summary>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: "0.5rem", marginTop: "0.5rem" }}>
               {result.extras.map(r => (
-                <div key={r.id} className="card small">
+                <Link key={r.id} href={"/releases/" + r.id + "/edit"} className="card small">
                   <div className="cover" style={{ height: 120 }}>
                     {r.thumbnail_url || r.cover_url ? (
                       <img src={r.thumbnail_url || r.cover_url || ""} alt={`Cover: ${r.original_title}`} style={{ height: "100%", objectFit: "cover" }} />
@@ -176,14 +192,14 @@ export default function MovieNightClient() {
                     <strong>{r.original_title}</strong>
                     <div className="muted small">{r.release_year ?? "Ukjent år"}</div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </details>
         )}
       </div>
     );
-  }, [loading, error, result, generate, pickTwoOther, showAllMatches]);
+  }, [loading, error, result, generate, pickTwoOther]);
 
   return (
     <div className="movie-night container" style={{ padding: "1rem 0" }}>
