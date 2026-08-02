@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Release } from "@/lib/types";
 import { ReleaseCard } from "@/components/release-card";
 
@@ -24,10 +24,35 @@ type ApiSuccess = {
 
 type ApiNoMatch = { success: false; message: string };
 
+const MOVIE_NIGHT_STORAGE_KEY = "dvd-catalog:movie-night-result";
+
 export default function MovieNightClient() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ApiSuccess | null>(null);
+
+  useEffect(() => {
+    try {
+      const savedResult = sessionStorage.getItem(MOVIE_NIGHT_STORAGE_KEY);
+      if (!savedResult) return;
+
+      const parsedResult = JSON.parse(savedResult) as ApiSuccess;
+      if (parsedResult.success) setResult(parsedResult);
+    } catch (e) {
+      console.warn("Kunne ikke gjenopprette forrige filmkveld.", e);
+      sessionStorage.removeItem(MOVIE_NIGHT_STORAGE_KEY);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!result) return;
+
+    try {
+      sessionStorage.setItem(MOVIE_NIGHT_STORAGE_KEY, JSON.stringify(result));
+    } catch (e) {
+      console.warn("Kunne ikke lagre filmkvelden.", e);
+    }
+  }, [result]);
 
   const generate = useCallback(async () => {
     setLoading(true);
@@ -78,7 +103,19 @@ export default function MovieNightClient() {
 
   const content = useMemo(() => {
     if (loading) return <p className="muted">Laster…</p>;
-    if (error) return <div className="error">{error}</div>;
+    if (error)
+      return (
+        <div>
+          <div className="error" role="alert">
+            {error}
+          </div>
+          <div className="actions" style={{ marginTop: "1rem" }}>
+            <button className="button" onClick={generate}>
+              Nytt tema
+            </button>
+          </div>
+        </div>
+      );
     if (!result)
       return (
         <>
