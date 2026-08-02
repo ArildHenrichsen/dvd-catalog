@@ -18,11 +18,18 @@ export async function ReleaseListing({ params, wishlist }: { params: ListParams;
   });
 
   const basePath = wishlist ? "/wishlist" : "/";
+  const searchesBothLists = !wishlist && Boolean(cleanParams.q?.trim());
+  const resultLabel = searchesBothLists
+    ? "treff i samling og ønskeliste"
+    : wishlist
+      ? "ønsker"
+      : "registreringer";
+
   return (
     <>
       <SearchToolbar values={cleanParams} basePath={basePath} />
       <div className="collection-meta">
-        <span className="count-pill">{result.count} {wishlist ? "ønsker" : "registreringer"}</span>
+        <span className="count-pill">{result.count} {resultLabel}</span>
       </div>
 
       {result.releases.length ? (
