@@ -20,8 +20,9 @@ export type MovieTheme = {
     personRole?: "actor" | "director";
     yearFrom?: number;
     yearTo?: number;
-    genres?: string[]; // textual genres, lib/tmdb can map to ids or use as search hints
-    keywords?: string[];
+    genres?: string[]; // TMDB genres. At least one must match unless requireAllGenres is true.
+    requireAllGenres?: boolean;
+    keywords?: string[]; // At least one keyword must match when provided.
     query?: string; // free text search
     limit?: number;
   };
@@ -154,7 +155,7 @@ export const THEMES: MovieTheme[] = [
     title: "Actionkomedie",
     description: "Action møter humor — eksplosjoner og quips.",
     source: "tmdb",
-    tmdbQuery: { keywords: ["action comedy"], genres: ["Action", "Comedy"], limit: 12 },
+    tmdbQuery: { keywords: ["action comedy"], genres: ["Action", "Comedy"], requireAllGenres: true, limit: 12 },
   },
   {
     id: "krigsfilmer",
@@ -240,14 +241,14 @@ export const THEMES: MovieTheme[] = [
     title: "Moderne romantiske komedier",
     description: "Lett og varm rom-com fra 90-tallet og nyere.",
     source: "tmdb",
-    tmdbQuery: { genres: ["Comedy", "Romance"], yearFrom: 1990, limit: 12 },
+    tmdbQuery: { genres: ["Comedy", "Romance"], requireAllGenres: true, yearFrom: 1990, limit: 12 },
   },
   {
     id: "romantic-drama",
     title: "Hjerte og smerte — romantisk drama",
     description: "Dype følelsesfilmer med konflikter, brudd eller tragisk kjærlighet.",
     source: "tmdb",
-    tmdbQuery: { genres: ["Drama", "Romance"], limit: 12 },
+    tmdbQuery: { genres: ["Drama", "Romance"], requireAllGenres: true, limit: 12 },
   },
   {
     id: "love-triangle",
@@ -267,8 +268,8 @@ export const THEMES: MovieTheme[] = [
     id: "romantic-comedies-classics",
     title: "Romantiske klassikere",
     description: "Tidløse rom-coms (før 1990).",
-    source: "collection",
-    collectionQuery: { yearFrom: 1900, yearTo: 1989, minimumImdbScore: 6 },
+    source: "tmdb",
+    tmdbQuery: { genres: ["Comedy", "Romance"], requireAllGenres: true, yearTo: 1989, limit: 12 },
   },
   {
     id: "psychological-thriller",
@@ -302,8 +303,8 @@ export const THEMES: MovieTheme[] = [
     id: "family-drama",
     title: "Familiens byrder",
     description: "Intime historier om familie, arv og forhold.",
-    source: "collection",
-    collectionQuery: { minimumImdbScore: 6, yearFrom: 1950, yearTo: new Date().getFullYear() },
+    source: "tmdb",
+    tmdbQuery: { genres: ["Drama"], keywords: ["family relationships", "family conflict", "dysfunctional family"], limit: 12 },
   },
   {
     id: "historical-epic",
@@ -316,8 +317,8 @@ export const THEMES: MovieTheme[] = [
     id: "ww2-films",
     title: "Andre verdenskrig",
     description: "Filmer satt under eller om 2. verdenskrig — fra fronten til hjemmekontoret.",
-    source: "collection",
-    collectionQuery: { yearFrom: 1935, yearTo: 1950 },
+    source: "tmdb",
+    tmdbQuery: { genres: ["War"], keywords: ["world war ii", "second world war"], limit: 12 },
   },
   {
     id: "historical-biopic",
@@ -387,7 +388,7 @@ export const THEMES: MovieTheme[] = [
     title: "Høyfantasy & episk magi",
     description: "Verdensbygging, magi og heltereiser.",
     source: "tmdb",
-    tmdbQuery: { genres: ["Fantasy", "Adventure"], keywords: ["high fantasy", "epic fantasy"], limit: 12 },
+    tmdbQuery: { genres: ["Fantasy", "Adventure"], requireAllGenres: true, keywords: ["high fantasy", "epic fantasy"], limit: 12 },
   },
   {
     id: "urban-fantasy",
@@ -414,8 +415,8 @@ export const THEMES: MovieTheme[] = [
     id: "fantasy-adventure",
     title: "Fantasi & eventyr",
     description: "Lettere, eventyrpregede fantasyfilmer — skattejakter og reiser.",
-    source: "collection",
-    collectionQuery: { yearFrom: 1970, minimumImdbScore: 5 },
+    source: "tmdb",
+    tmdbQuery: { genres: ["Fantasy", "Adventure"], requireAllGenres: true, yearFrom: 1970, limit: 12 },
   },
   {
     id: "coming-of-age-mystery",
@@ -429,7 +430,7 @@ export const THEMES: MovieTheme[] = [
     title: "Kjærlighet i fare — romantic thriller",
     description: "Romantikk blandet med fare, bedrag eller konspirasjon.",
     source: "tmdb",
-    tmdbQuery: { genres: ["Thriller", "Romance"], keywords: ["romantic thriller"], limit: 12 },
+    tmdbQuery: { genres: ["Thriller", "Romance"], requireAllGenres: true, keywords: ["romantic thriller"], limit: 12 },
   },
   {
     id: "fantasy-folklore",
