@@ -118,7 +118,10 @@ function matchesThemeMetadata(release: ReleaseWithKeywords, theme: MovieTheme) {
 
   if (query.genres?.length) {
     const requiredGenres = query.genres.map(normalizeKeyword);
-    if (!requiredGenres.every(genre => genres.has(genre))) return false;
+    const genreMatches = query.requireAllGenres
+      ? requiredGenres.every(genre => genres.has(genre))
+      : requiredGenres.some(genre => genres.has(genre));
+    if (!genreMatches) return false;
   }
 
   if (query.keywords?.length) {
