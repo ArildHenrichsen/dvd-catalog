@@ -950,6 +950,53 @@ export function ReleaseForm({
           />
         </label>
 
+        {release && (
+          <div className="two-col">
+            <label>
+              Utgivelsesår
+
+              <input
+                name="release_year"
+                type="number"
+                min="1888"
+                max={
+                  new Date().getFullYear() +
+                  1
+                }
+                value={releaseYear}
+                onChange={(event) =>
+                  {
+                    markManualField(
+                      "release_year",
+                    );
+                    setReleaseYear(
+                      event.target.value,
+                    );
+                  }
+                }
+              />
+            </label>
+
+            <label>
+              IMDb-score
+
+              <input
+                name="imdb_score"
+                type="number"
+                min="0"
+                max="10"
+                step="0.1"
+                value={imdbScore}
+                onChange={(event) =>
+                  setImdbScore(
+                    event.target.value,
+                  )
+                }
+              />
+            </label>
+          </div>
+        )}
+
         <div className="two-col">
           <label>
             DVD-region
@@ -1150,50 +1197,7 @@ export function ReleaseForm({
                   )}
                 </section>
 
-                <div className="two-col">
-                  <label>
-                    Utgivelsesår
 
-                    <input
-                      name="release_year"
-                      type="number"
-                      min="1888"
-                      max={
-                        new Date().getFullYear() +
-                        1
-                      }
-                      value={releaseYear}
-                      onChange={(event) =>
-                        {
-                          markManualField(
-                            "release_year",
-                          );
-                          setReleaseYear(
-                            event.target.value,
-                          );
-                        }
-                      }
-                    />
-                  </label>
-
-                  <label>
-                    IMDb-score
-
-                    <input
-                      name="imdb_score"
-                      type="number"
-                      min="0"
-                      max="10"
-                      step="0.1"
-                      value={imdbScore}
-                      onChange={(event) =>
-                        setImdbScore(
-                          event.target.value,
-                        )
-                      }
-                    />
-                  </label>
-                </div>
 
                 <ImdbScoreButton
                   releaseId={String(release.id)}
