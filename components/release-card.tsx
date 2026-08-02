@@ -6,7 +6,7 @@ export function ReleaseCard({ release }: { release: Release }) {
   const srcSet = release.thumbnail_url && release.cover_url ? `${release.thumbnail_url} 320w, ${release.cover_url} 1600w` : undefined;
 
   return (
-    <Link className="card" href={`/releases/${release.id}`}>
+    <Link className="card" href={`/releases/${release.id}/edit`}>
       <div className="cover">
         {(release.thumbnail_url || release.cover_url) ? (
           <img
