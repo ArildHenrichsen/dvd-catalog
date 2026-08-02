@@ -1,7 +1,7 @@
 import { getSupabaseAdmin } from "./supabase";
 import { THEMES, MovieTheme } from "./theme";
 import type { Release } from "./types";
-import { effectiveKeywords, parseImdbId, pickBestDiversePair } from "@/lib/keyword-utils";
+import { effectiveKeywords, normalizeKeyword, parseImdbId, pickBestDiversePair } from "@/lib/keyword-utils";
 import { enrichReleaseKeywords } from "@/lib/keyword-enrichment";
 
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
@@ -92,6 +92,42 @@ type ReleaseWithKeywords = Release & {
   last_suggested_at?: string | null;
   theme_suggestion_counts?: Record<string, number> | null;
 };
+
+function matchesThemeMetadata(release: ReleaseWithKeywords, theme: MovieTheme) {
+  const query = theme.tmdbQuery;
+  if (!query) return false;
+
+  const metadata = effectiveKeywords(release.manual_keywords, release.auto_keywords);
+  const genres = new Set([
+    ...(release.genres ?? []).map(normalizeKeyword),
+    ...metadata.filter(value => value.startsWith("genre-")).map(value => value.slice("genre-".length)),
+  ]);
+  const topics = new Set([
+    ...metadata,
+    ...metadata.filter(value => value.startsWith("theme-")).map(value => value.slice("theme-".length)),
+  ]);
+
+  if (query.yearFrom && (release.release_year ?? 0) < query.yearFrom) return false;
+  if (query.yearTo && (release.release_year ?? 0) > query.yearTo) return false;
+
+  if (query.person) {
+    const person = normalizeKeyword(query.person);
+    const role = query.personRole === "director" ? "director" : "cast";
+    if (!metadata.includes(role + "-" + person)) return false;
+  }
+
+  if (query.genres?.length) {
+    const requiredGenres = query.genres.map(normalizeKeyword);
+    if (!requiredGenres.every(genre => genres.has(genre))) return false;
+  }
+
+  if (query.keywords?.length) {
+    const acceptedKeywords = query.keywords.map(normalizeKeyword);
+    if (!acceptedKeywords.some(keyword => topics.has(keyword))) return false;
+  }
+
+  return Boolean(query.person || query.genres?.length || query.keywords?.length);
+}
 
 function scoreCandidate(
   release: ReleaseWithKeywords,
@@ -338,67 +374,13 @@ export async function generateMovieNight(options?: { maxThemesToTest?: number })
           }
         }
       } else if (theme.source === "tmdb" && theme.tmdbQuery) {
-        let movies: any[] = [];
-        if (theme.tmdbQuery.person) {
-          try {
-            const personSearch = await tmdbFetch("/search/person", { query: theme.tmdbQuery.person, language: "nb-NO", page: 1 });
-            const person = (personSearch.results ?? [])[0];
-            if (person?.id) {
-              const credits = await tmdbFetch(`/person/${person.id}/movie_credits`, { language: "nb-NO" });
-              movies = (credits.cast ?? []).concat(credits.crew ?? []);
-            }
-          } catch (e) {
-            console.error("TMDB person search failed", e);
-          }
-        }
+        matched = allReleases
+          .filter(release => matchesThemeMetadata(release, theme))
+          .map(release => ({
+            release,
+            reason: "Matcher metadata for temaet «" + theme.title + "»",
+          }));
 
-        if (!movies.length) {
-          const keywordsJoined = (theme.tmdbQuery.keywords ?? []).join(" ");
-          const query = (theme.tmdbQuery.query ?? keywordsJoined) || "";
-          try {
-            const payload = await tmdbFetch("/search/movie", { query: query || "a", language: "nb-NO", page: 1 });
-            movies = payload.results ?? [];
-          } catch (e) {
-            console.error("TMDB movie search failed", e);
-            movies = [];
-          }
-        }
-
-        movies = shuffleArray(movies);
-        const limit = Math.min(theme.tmdbQuery.limit ?? 12, movies.length);
-        movies = movies.slice(0, limit);
-
-        for (const m of movies) {
-          const y = m.release_date ? Number(m.release_date.slice(0, 4)) : null;
-          const key = titleYearKey(m.original_title ?? m.title, y);
-          const found = titleYearMap.get(key);
-          if (!found) continue;
-          for (const r of shuffleArray(found)) {
-            if (extraSet.has(r.id)) continue;
-            matched.push({ release: r, reason: `TMDB: matcher tittel/år (${m.original_title ?? m.title}${y ? `, ${y}` : ""})` });
-            extraSet.set(r.id, r);
-          }
-        }
-
-        if (matched.length < 4) {
-          for (const m of movies) {
-            try {
-              const ext = await tmdbFetch(`/movie/${m.id}/external_ids`, { language: "nb-NO" });
-              const imdbId = parseImdbId(ext.imdb_id);
-              if (!imdbId) continue;
-              const found = imdbMap.get(imdbId);
-              if (!found) continue;
-              for (const r of shuffleArray(found)) {
-                if (extraSet.has(r.id)) continue;
-                matched.push({ release: r, reason: `TMDB: IMDb-match (${imdbId})` });
-                extraSet.set(r.id, r);
-              }
-            } catch (e) {
-              console.error("TMDB external ids fetch failed", e);
-            }
-            if (matched.length >= 6) break;
-          }
-        }
       }
 
       const unique = new Map<string, { release: ReleaseWithKeywords; reason: string }>();
