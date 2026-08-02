@@ -531,4 +531,34 @@ export const THEMES: MovieTheme[] = [
     source: "tmdb",
     tmdbQuery: { genres: ["Comedy"], keywords: ["spoof", "parody", "satire"], limit: 12 },
   },
+  {
+    id: "hoylydt-og-braakete",
+    title: "Høylydt og bråkete",
+    description: "Eksplosjoner, pang-pang og maksimal action.",
+    source: "tmdb",
+    tmdbQuery: {
+      genres: ["Action", "Thriller"],
+      keywords: ["explosion", "gunfight", "chaos"],
+    },
+  },
+  {
+    id: "basert-paa-videospill",
+    title: "Basert på videospill",
+    description: "Filmer inspirert av eller basert på videospill.",
+    source: "tmdb",
+    tmdbQuery: {
+      keywords: ["video game", "based on video game"],
+      genres: ["Action", "Adventure", "Science Fiction"],
+    },
+  },
+  {
+    id: "snikmordere-og-leiesoldater",
+    title: "Snikmordere og leiesoldater",
+    description: "Leiemordere, kontrakter og dødelige oppdrag i skyggene.",
+    source: "tmdb",
+    tmdbQuery: {
+      keywords: ["assassin", "hitman", "mercenary"],
+      genres: ["Action", "Thriller", "Crime"],
+    },
+  },
 ];
