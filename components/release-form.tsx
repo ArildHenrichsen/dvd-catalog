@@ -43,6 +43,18 @@ type MetadataPreview = {
   changedFields: string[];
 };
 
+function normalizeImdbUrlInput(value: string) {
+  const match = value.trim().match(
+    /\/title\/(tt\d{7,10})(?:\/|$)/i,
+  );
+
+  if (!match) {
+    return value;
+  }
+
+  return `https://www.imdb.com/title/${match[1].toLowerCase()}/`;
+}
+
 export function ReleaseForm({
   release,
   initial,
@@ -1218,7 +1230,9 @@ export function ReleaseForm({
                       {
                         markManualField("imdb_url");
                         setImdbUrl(
-                          event.target.value,
+                          normalizeImdbUrlInput(
+                            event.target.value,
+                          ),
                         );
                       }
                     }
@@ -1469,8 +1483,10 @@ export function ReleaseForm({
                   {
                     markManualField("imdb_url");
                     setImdbUrl(
-                      event.target.value,
-                    );
+                          normalizeImdbUrlInput(
+                            event.target.value,
+                          ),
+                        );
                   }
                 }
                 placeholder="https://www.imdb.com/title/tt..."
