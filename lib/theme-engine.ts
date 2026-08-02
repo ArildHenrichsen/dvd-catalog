@@ -76,6 +76,18 @@ export type ThemeMatch = {
   extras: Release[];
 };
 
+export type ThemeDiagnostic = {
+  themeId: string;
+  title: string;
+  source: MovieTheme["source"];
+  status: "selected" | "insufficient-matches" | "insufficient-pair" | "error";
+  collectionSize: number;
+  matchedCount: number;
+  durationMs: number;
+  criteria: MovieTheme["collectionQuery"] | MovieTheme["tmdbQuery"] | null;
+  error?: string;
+};
+
 type HistoryRow = {
   theme_id: string;
   keywords: string[] | null;
@@ -329,11 +341,13 @@ export async function generateMovieNight(options?: { maxThemesToTest?: number })
   }
 
   const themes = shuffleArray(THEMES);
+  const diagnostics: ThemeDiagnostic[] = [];
   let tested = 0;
 
   for (const theme of themes) {
     if (tested >= maxThemes) break;
     tested++;
+    const themeStartedAt = Date.now();
 
     try {
       let matched: Array<{ release: ReleaseWithKeywords; reason: string }> = [];
@@ -392,6 +406,17 @@ export async function generateMovieNight(options?: { maxThemesToTest?: number })
       }
 
       const results = shuffleArray(Array.from(unique.values()));
+      if (results.length < 2) {
+        diagnostics.push({
+          themeId: theme.id, title: theme.title, source: theme.source,
+          status: "insufficient-matches",
+          collectionSize: allReleases.length, matchedCount: results.length,
+          durationMs: Date.now() - themeStartedAt,
+          criteria: theme.source === "collection" ? theme.collectionQuery ?? null : theme.tmdbQuery ?? null,
+        });
+        continue;
+      }
+
       if (results.length >= 2) {
         const nowMs = Date.now();
         const themePenalty = recentThemeCount.get(theme.id) ?? 0;
@@ -413,7 +438,16 @@ export async function generateMovieNight(options?: { maxThemesToTest?: number })
 
         const pickedIds = pair ? new Set([pair[0].id, pair[1].id]) : new Set(randomizedPool.slice(0, 2).map(p => p.release.id));
         const chosen = shuffleArray(candidates.filter(c => pickedIds.has(c.release.id))).slice(0, 2);
-        if (chosen.length < 2) continue;
+        if (chosen.length < 2) {
+          diagnostics.push({
+            themeId: theme.id, title: theme.title, source: theme.source,
+            status: "insufficient-pair",
+            collectionSize: allReleases.length, matchedCount: results.length,
+            durationMs: Date.now() - themeStartedAt,
+            criteria: theme.source === "collection" ? theme.collectionQuery ?? null : theme.tmdbQuery ?? null,
+          });
+          continue;
+        }
         const extras = shuffleArray(candidates.filter(c => !pickedIds.has(c.release.id)).map(c => c.release));
         const keywordSet = Array.from(new Set(chosen.flatMap(c => c.keywords)));
         await persistSuggestion(
@@ -423,18 +457,41 @@ export async function generateMovieNight(options?: { maxThemesToTest?: number })
           keywordSet,
         );
 
+        diagnostics.push({
+          themeId: theme.id, title: theme.title, source: theme.source,
+          status: "selected",
+          collectionSize: allReleases.length, matchedCount: results.length,
+          durationMs: Date.now() - themeStartedAt,
+          criteria: theme.source === "collection" ? theme.collectionQuery ?? null : theme.tmdbQuery ?? null,
+        });
+        console.info("Filmkveld-diagnostikk", { tested, diagnostics });
+
         return {
           success: true as const,
           theme,
           films: chosen.map(c => ({ release: c.release, reason: c.reason })),
           totalMatches: results.length,
           extras,
+          diagnostics,
         };
       }
     } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      diagnostics.push({
+        themeId: theme.id, title: theme.title, source: theme.source, status: "error",
+        collectionSize: allReleases.length, matchedCount: 0,
+        durationMs: Date.now() - themeStartedAt,
+        criteria: theme.source === "collection" ? theme.collectionQuery ?? null : theme.tmdbQuery ?? null,
+        error: errorMessage,
+      });
       console.error("Feil ved testing av tema", theme.id, e);
     }
   }
 
-  return { success: false as const, message: "Fant ingen temaer med minst to treff i samlingen." };
+  console.info("Filmkveld-diagnostikk", { tested, diagnostics });
+  return {
+    success: false as const,
+    message: "Fant ingen temaer med minst to treff i samlingen.",
+    diagnostics,
+  };
 }
