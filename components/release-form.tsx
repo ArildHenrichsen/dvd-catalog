@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Release } from "@/lib/types";
 import { ImdbScoreButton } from "@/components/imdb-score-button";
@@ -1664,15 +1665,17 @@ export function ReleaseForm({
                 Det finnes én eller flere
                 registreringer med samme
                 originaltittel eller IMDb-lenke.
-                Det kan likevel være en annen
-                DVD-utgave.
+                Klikk på et treff for å forkaste
+                utkastet og redigere den
+                eksisterende DVD-en.
               </p>
 
               <div className="duplicate-list">
                 {duplicateMatches.map(
                   (match) => (
-                    <div
+                    <Link
                       className="duplicate-match"
+                      href={`/releases/${match.id}/edit`}
                       key={match.id}
                     >
                       <strong>
@@ -1701,7 +1704,11 @@ export function ReleaseForm({
                           ? ` · Region ${match.region}`
                           : ""}
                       </small>
-                    </div>
+
+                      <span className="duplicate-match-action">
+                        Åpne og rediger →
+                      </span>
+                    </Link>
                   ),
                 )}
               </div>
