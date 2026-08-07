@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { ExportMenu } from "@/components/export-menu";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -27,22 +28,7 @@ export default function RootLayout({
                 + Legg til
               </Link>
 
-              <details className="export-menu">
-                <summary className="button">
-                  Eksporter
-                  <span className="export-menu-chevron" aria-hidden="true">▾</span>
-                </summary>
-                <div className="export-submenu" role="menu" aria-label="Velg eksportformat">
-                  <a href="/api/export?format=csv" role="menuitem">
-                    <span aria-hidden="true">▦</span>
-                    CSV
-                  </a>
-                  <a href="/api/export?format=json" role="menuitem">
-                    <span aria-hidden="true">{"{}"}</span>
-                    JSON
-                  </a>
-                </div>
-              </details>
+              <ExportMenu />
 
               <Link className="button" href="/movie-night">
                 Hva skal vi se?
