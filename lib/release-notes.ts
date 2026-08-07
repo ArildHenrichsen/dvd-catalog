@@ -1,5 +1,7 @@
 export const structuredNoteLabels = [
   "Film-combo",
+  "Svensk cover",
+  "Unrated",
   "Extended",
   "Director's cut",
   "Special Edition",
