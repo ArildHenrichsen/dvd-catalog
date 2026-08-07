@@ -17,45 +17,34 @@ export default function RootLayout({
       <body>
         <header>
           <div className="container header-row">
-            <Link
-              className="brand"
-              href="/"
-              aria-label="Gå til DVD-samlingen"
-            >
-              <span
-                className="brand-mark"
-                aria-hidden="true"
-              >
-                ▶
-              </span>
-
-              <span className="app-title">
-                DVD-samlingen
-              </span>
+            <Link className="brand" href="/" aria-label="Gå til DVD-samlingen">
+              <span className="brand-mark" aria-hidden="true">▶</span>
+              <span className="app-title">DVD-samlingen</span>
             </Link>
 
-            <nav
-              className="header-actions"
-              aria-label="Hovedhandlinger"
-            >
-              <Link
-                className="button primary"
-                href="/releases/new"
-              >
+            <nav className="header-actions" aria-label="Hovedhandlinger">
+              <Link className="button primary" href="/releases/new">
                 + Legg til
               </Link>
 
-              <Link
-                className="button"
-                href="/api/export"
-              >
-                Eksporter
-              </Link>
+              <details className="export-menu">
+                <summary className="button">
+                  Eksporter
+                  <span className="export-menu-chevron" aria-hidden="true">▾</span>
+                </summary>
+                <div className="export-submenu" role="menu" aria-label="Velg eksportformat">
+                  <a href="/api/export?format=csv" role="menuitem">
+                    <span aria-hidden="true">▦</span>
+                    CSV
+                  </a>
+                  <a href="/api/export?format=json" role="menuitem">
+                    <span aria-hidden="true">{"{}"}</span>
+                    JSON
+                  </a>
+                </div>
+              </details>
 
-              <Link
-                className="button"
-                href="/movie-night"
-              >
+              <Link className="button" href="/movie-night">
                 Hva skal vi se?
               </Link>
 
@@ -65,17 +54,13 @@ export default function RootLayout({
                 aria-label="Innstillinger og verktøy"
                 title="Innstillinger og verktøy"
               >
-                <span aria-hidden="true">
-                  ⚙
-                </span>
+                <span aria-hidden="true">⚙</span>
               </Link>
             </nav>
           </div>
         </header>
 
-        <main className="container">
-          {children}
-        </main>
+        <main className="container">{children}</main>
       </body>
     </html>
   );
