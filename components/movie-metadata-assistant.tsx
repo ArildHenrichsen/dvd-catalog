@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { MovieSuggestion } from "@/lib/tmdb";
 
 type Metadata = Pick<
@@ -20,6 +21,16 @@ type ImportedCover = {
   path: string;
   thumbnailPath?: string;
   url: string;
+};
+
+type DuplicateMatch = {
+  id: string;
+  original_title: string;
+  alternative_title: string | null;
+  release_year: number | null;
+  is_wishlist: boolean;
+  edition: string | null;
+  region: string | null;
 };
 
 type BusyState =
@@ -50,6 +61,12 @@ export function MovieMetadataAssistant({
   const [results, setResults] = useState<
     MovieSuggestion[]
   >([]);
+
+  const [duplicateMatches, setDuplicateMatches] =
+    useState<DuplicateMatch[]>([]);
+
+  const [pendingMovie, setPendingMovie] =
+    useState<MovieSuggestion | null>(null);
 
   const [busy, setBusy] =
     useState<BusyState>(null);
@@ -201,6 +218,37 @@ export function MovieMetadataAssistant({
     }
   }
 
+  async function findDuplicates(
+    movie: MovieSuggestion,
+  ): Promise<DuplicateMatch[]> {
+    const params = new URLSearchParams({
+      title: movie.original_title,
+    });
+
+    if (movie.imdb_url) {
+      params.set("imdbUrl", movie.imdb_url);
+    }
+
+    const response = await fetch(
+      `/api/releases/duplicates?${params.toString()}`,
+    );
+
+    const json = await response
+      .json()
+      .catch(() => null);
+
+    if (!response.ok) {
+      throw new Error(
+        json?.error ||
+          "Kunne ikke kontrollere om filmen finnes fra før",
+      );
+    }
+
+    return Array.isArray(json?.matches)
+      ? json.matches
+      : [];
+  }
+
   async function fetchImdbScore(
     movie: MovieSuggestion,
   ): Promise<number | null> {
@@ -306,10 +354,27 @@ export function MovieMetadataAssistant({
 
   async function applyMovie(
     movie: MovieSuggestion,
+    skipDuplicateCheck = false,
   ) {
     setError("");
 
     try {
+      if (!existingReleaseId && !skipDuplicateCheck) {
+        setBusy("search");
+        setStatus(
+          "Kontrollerer samlingen og ønskelisten …",
+        );
+
+        const matches = await findDuplicates(movie);
+
+        if (matches.length > 0) {
+          setDuplicateMatches(matches);
+          setPendingMovie(movie);
+          setStatus("");
+          return;
+        }
+      }
+
       let importedCover:
         | ImportedCover
         | undefined;
@@ -509,6 +574,90 @@ export function MovieMetadataAssistant({
               </button>
             </article>
           ))}
+        </div>
+      )}
+      {pendingMovie && duplicateMatches.length > 0 && (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+        >
+          <section
+            className="duplicate-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="suggestion-duplicate-title"
+          >
+            <h2 id="suggestion-duplicate-title">
+              Filmen finnes allerede
+            </h2>
+
+            <p>
+              Valgt film finnes i samlingen eller på
+              ønskelisten. Åpne et treff for å forkaste
+              utkastet og redigere den eksisterende DVD-en.
+            </p>
+
+            <div className="duplicate-list">
+              {duplicateMatches.map((match) => (
+                <Link
+                  className="duplicate-match"
+                  href={`/releases/${match.id}/edit`}
+                  key={match.id}
+                >
+                  <strong>{match.original_title}</strong>
+
+                  {match.alternative_title && (
+                    <span>{match.alternative_title}</span>
+                  )}
+
+                  <small>
+                    {match.release_year ?? "Ukjent år"}
+                    {" · "}
+                    {match.is_wishlist
+                      ? "På ønskelisten"
+                      : "I samlingen"}
+                    {match.edition
+                      ? ` · ${match.edition}`
+                      : ""}
+                    {match.region
+                      ? ` · Region ${match.region}`
+                      : ""}
+                  </small>
+
+                  <span className="duplicate-match-action">
+                    Åpne og rediger →
+                  </span>
+                </Link>
+              ))}
+            </div>
+
+            <div className="form-actions">
+              <button
+                type="button"
+                className="primary"
+                disabled={busy !== null}
+                onClick={() => {
+                  const movie = pendingMovie;
+                  setPendingMovie(null);
+                  setDuplicateMatches([]);
+                  void applyMovie(movie, true);
+                }}
+              >
+                Fortsett med ny registrering
+              </button>
+
+              <button
+                type="button"
+                disabled={busy !== null}
+                onClick={() => {
+                  setPendingMovie(null);
+                  setDuplicateMatches([]);
+                }}
+              >
+                Avbryt
+              </button>
+            </div>
+          </section>
         </div>
       )}
     </section>
