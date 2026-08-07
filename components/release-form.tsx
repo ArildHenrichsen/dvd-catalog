@@ -6,6 +6,7 @@ import type { Release } from "@/lib/types";
 import { ImdbScoreButton } from "@/components/imdb-score-button";
 import { MovieMetadataAssistant } from "@/components/movie-metadata-assistant";
 import { splitKeywordInput } from "@/lib/keyword-utils";
+import { compressImageForUpload } from "@/lib/compress-image";
 import {
   formatReleaseNotes,
   parseReleaseNotes,
@@ -529,8 +530,10 @@ export function ReleaseForm({
     setError("");
 
     try {
+      const compressedFile =
+        await compressImageForUpload(file);
       const body = new FormData();
-      body.append("file", file);
+      body.append("file", compressedFile);
 
       const response = await fetch("/api/upload", {
         method: "POST",
