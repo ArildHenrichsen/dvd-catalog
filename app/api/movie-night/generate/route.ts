@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
 import { generateMovieNight } from "@/lib/theme-engine";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const result = await generateMovieNight({ maxThemesToTest: 12 });
+    const themeId =
+      new URL(req.url).searchParams.get("theme") ||
+      undefined;
+    const result = await generateMovieNight({
+      maxThemesToTest: 12,
+      themeId,
+    });
 
     // Include which Supabase env var is present (boolean flags only) when not in production.
     const envInfo = {
