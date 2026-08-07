@@ -1502,6 +1502,29 @@ dd {
   color: var(--muted);
 }
 
+a.duplicate-match {
+  color: inherit;
+  cursor: pointer;
+  transition:
+    border-color .16s ease,
+    background .16s ease,
+    transform .16s ease;
+}
+
+a.duplicate-match:hover,
+a.duplicate-match:focus-visible {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.duplicate-match .duplicate-match-action {
+  margin-top: .25rem;
+  color: var(--accent-strong);
+  font-weight: 800;
+}
+
 .duplicate-dialog h2 {
   margin-top: 0;
 }
