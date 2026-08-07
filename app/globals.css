@@ -1510,3 +1510,68 @@ dd {
   color: var(--muted);
   line-height: 1.5;
 }
+
+/* Export format submenu */
+.export-menu {
+  position: relative;
+}
+
+.export-menu > summary {
+  list-style: none;
+}
+
+.export-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.export-menu-chevron {
+  font-size: .72rem;
+  transition: transform .16s ease;
+}
+
+.export-menu[open] .export-menu-chevron {
+  transform: rotate(180deg);
+}
+
+.export-submenu {
+  position: absolute;
+  top: calc(100% + .45rem);
+  right: 0;
+  z-index: 30;
+  min-width: 10rem;
+  padding: .38rem;
+  display: grid;
+  gap: .18rem;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-md);
+}
+
+.export-submenu a {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  padding: .62rem .7rem;
+  border-radius: 9px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.export-submenu a:hover,
+.export-submenu a:focus-visible {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  outline: none;
+}
+
+@media (max-width: 600px) {
+  .export-menu > summary {
+    width: 100%;
+  }
+
+  .export-submenu {
+    left: 0;
+    right: auto;
+  }
+}
