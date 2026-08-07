@@ -223,8 +223,16 @@ function shuffleArray<T>(arr: T[]): T[] {
   return copy;
 }
 
-export async function generateMovieNight(options?: { maxThemesToTest?: number }) {
-  const maxThemes = options?.maxThemesToTest ?? 12;
+export async function generateMovieNight(options?: {
+  maxThemesToTest?: number;
+  themeId?: string;
+}) {
+  const requestedTheme = options?.themeId
+    ? THEMES.find(theme => theme.id === options.themeId)
+    : undefined;
+  const maxThemes = requestedTheme
+    ? 1
+    : options?.maxThemesToTest ?? 12;
   const supabase = getSupabaseAdmin();
 
   let allReleases: ReleaseWithKeywords[] = [];
@@ -340,7 +348,9 @@ export async function generateMovieNight(options?: { maxThemesToTest?: number })
     console.error("Kunne ikke lese movie_night_history, fortsetter uten historikk:", error);
   }
 
-  const themes = shuffleArray(THEMES);
+  const themes = requestedTheme
+    ? [requestedTheme]
+    : shuffleArray(THEMES);
   const diagnostics: ThemeDiagnostic[] = [];
   let tested = 0;
 
@@ -466,12 +476,59 @@ export async function generateMovieNight(options?: { maxThemesToTest?: number })
         });
         console.info("Filmkveld-diagnostikk", { tested, diagnostics });
 
+        const suggestedThemes = shuffleArray(
+          THEMES.filter(candidate => {
+            if (candidate.id === theme.id) return false;
+
+            if (candidate.source === "collection" && candidate.collectionQuery) {
+              const matches = allReleases.filter(release => {
+                const year = release.release_year;
+                if (candidate.collectionQuery?.yearFrom && (year ?? 0) < candidate.collectionQuery.yearFrom) return false;
+                if (candidate.collectionQuery?.yearTo && (year ?? 0) > candidate.collectionQuery.yearTo) return false;
+                if (
+                  candidate.collectionQuery?.minimumImdbScore !== undefined &&
+                  (release.imdb_score ?? 0) < candidate.collectionQuery.minimumImdbScore
+                ) return false;
+                if (
+                  candidate.collectionQuery?.maximumImdbScore !== undefined &&
+                  (release.imdb_score ?? 0) > candidate.collectionQuery.maximumImdbScore
+                ) return false;
+                return true;
+              });
+
+              if (!candidate.collectionQuery.requireSameDecade) {
+                return matches.length >= 2;
+              }
+
+              const decadeCounts = new Map<number, number>();
+              for (const release of matches) {
+                const decade = Math.floor((release.release_year ?? 0) / 10) * 10;
+                decadeCounts.set(decade, (decadeCounts.get(decade) ?? 0) + 1);
+              }
+              return Array.from(decadeCounts.values()).some(count => count >= 2);
+            }
+
+            return candidate.source === "tmdb"
+              ? allReleases.filter(release =>
+                  matchesThemeMetadata(release, candidate),
+                ).length >= 2
+              : false;
+          }),
+        )
+          .slice(0, 3)
+          .map(candidate => ({
+            id: candidate.id,
+            title: candidate.title,
+            description: candidate.description,
+          }));
+
         return {
           success: true as const,
           theme,
           films: chosen.map(c => ({ release: c.release, reason: c.reason })),
           totalMatches: results.length,
           extras,
+          suggestedThemes,
           diagnostics,
         };
       }
