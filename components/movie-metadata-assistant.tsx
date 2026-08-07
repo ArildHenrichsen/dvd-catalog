@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import type { MovieSuggestion } from "@/lib/tmdb";
 
 type Metadata = Pick<
@@ -576,7 +577,9 @@ export function MovieMetadataAssistant({
           ))}
         </div>
       )}
-      {pendingMovie && duplicateMatches.length > 0 && (
+      {pendingMovie &&
+        duplicateMatches.length > 0 &&
+        createPortal(
         <div
           className="modal-backdrop"
           role="presentation"
@@ -658,7 +661,8 @@ export function MovieMetadataAssistant({
               </button>
             </div>
           </section>
-        </div>
+        </div>,
+        document.body,
       )}
     </section>
   );
