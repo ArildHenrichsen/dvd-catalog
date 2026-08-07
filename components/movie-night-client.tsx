@@ -21,6 +21,11 @@ type ApiSuccess = {
   films: ApiFilm[];
   totalMatches: number;
   extras?: Release[];
+  suggestedThemes?: Array<{
+    id: string;
+    title: string;
+    description: string;
+  }>;
 };
 
 type ApiNoMatch = { success: false; message: string };
@@ -70,7 +75,7 @@ export default function MovieNightClient() {
     }
   }, [result]);
 
-  const generate = useCallback(async () => {
+  const generate = useCallback(async (themeId?: string) => {
     setLoading(true);
     setError(null);
     setResult(null);
@@ -82,7 +87,14 @@ export default function MovieNightClient() {
     window.history.replaceState(window.history.state, "", currentUrl);
 
     try {
-      const res = await fetch("/api/movie-night/generate");
+      const endpoint = new URL(
+        "/api/movie-night/generate",
+        window.location.origin,
+      );
+      if (themeId) {
+        endpoint.searchParams.set("theme", themeId);
+      }
+      const res = await fetch(endpoint);
       const payload = (await res.json()) as ApiSuccess | ApiNoMatch;
       if (!payload) {
         setError("Uventet svar fra serveren.");
@@ -129,7 +141,7 @@ export default function MovieNightClient() {
             {error}
           </div>
           <div className="actions" style={{ marginTop: "1rem" }}>
-            <button className="button" onClick={generate}>
+            <button className="button" onClick={() => void generate()}>
               Nytt tema
             </button>
           </div>
@@ -139,7 +151,7 @@ export default function MovieNightClient() {
       return (
         <>
           <p>Trykk på knappen for å generere en filmkveld basert på samlingen din.</p>
-          <button className="button primary" onClick={generate}>
+          <button className="button primary" onClick={() => void generate()}>
             Generer filmkveld
           </button>
         </>
@@ -151,7 +163,7 @@ export default function MovieNightClient() {
           <h1>{result.theme.title}</h1>
           <p className="muted">{result.theme.description}</p>
           <div className="actions" style={{ marginTop: "1rem" }}>
-            <button className="button" onClick={generate} disabled={loading}>
+            <button className="button" onClick={() => void generate()} disabled={loading}>
               Nytt tema
             </button>{" "}
             <button
@@ -162,6 +174,32 @@ export default function MovieNightClient() {
               Velg to andre filmer
             </button>
           </div>
+
+          {result.suggestedThemes &&
+            result.suggestedThemes.length > 0 && (
+              <div style={{ marginTop: "1.25rem" }}>
+                <strong>Prøv et annet tema</strong>
+                <div
+                  className="actions"
+                  style={{ marginTop: "0.65rem" }}
+                >
+                  {result.suggestedThemes.map(theme => (
+                    <button
+                      className="button"
+                      type="button"
+                      key={theme.id}
+                      title={theme.description}
+                      disabled={loading}
+                      onClick={() =>
+                        void generate(theme.id)
+                      }
+                    >
+                      {theme.title}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
         </section>
 
         <section className="film-cards" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 280px))", gap: "1rem", marginTop: "1rem" }}>
